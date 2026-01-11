@@ -1,0 +1,2 @@
+# Python dependencies for PPTX extraction
+python-pptx>=0.6.21

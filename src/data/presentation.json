@@ -1,0 +1,53 @@
+{
+  "metadata": {
+    "id": "00000000-0000-0000-0000-000000000000",
+    "source_file": "placeholder.pptx",
+    "processed_at": "2026-01-01T00:00:00.000000",
+    "stats": {
+      "slide_count": 1,
+      "image_count": 0
+    }
+  },
+  "sections": [
+    {
+      "title": "Getting Started",
+      "slides": [
+        {
+          "order": 1,
+          "title": "Welcome to Your Handout Site",
+          "layout": "Title Slide",
+          "notes": "This is a placeholder slide. Replace this with your actual presentation content.",
+          "content": [
+            {
+              "type": "heading",
+              "text": "Replace this with your presentation",
+              "level": 2
+            },
+            {
+              "type": "list",
+              "style": "bullet",
+              "items": [
+                {
+                  "text": "Extract your PowerPoint using: python scripts/extract-pptx.py your-presentation.pptx sourcematerials/",
+                  "children": []
+                },
+                {
+                  "text": "Update src/data/sessionInfo.ts with your session details",
+                  "children": []
+                },
+                {
+                  "text": "Run npm run build to process media and build the site",
+                  "children": []
+                },
+                {
+                  "text": "Deploy with: vercel --prod or wrangler pages deploy dist",
+                  "children": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
