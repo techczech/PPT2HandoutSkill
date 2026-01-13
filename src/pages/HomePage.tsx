@@ -51,55 +51,78 @@ export default function HomePage() {
 
         {/* Main Content Area */}
         <div className="page-content">
-          {/* Talk Page Link (if available) */}
-          {hasTalkPage && (
-            <a
-              href={sessionInfo.talkPageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="card flex items-center gap-4 p-5 no-underline transition-all hover:shadow-lg"
-              style={{ borderTop: '4px solid var(--color-accent)' }}
+          {/* Primary CTAs - Slides and Talk Page side by side */}
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Browse Slides - Always shown prominently */}
+            <Link
+              to="/slides"
+              className="card card-hover flex items-center gap-4 p-5 no-underline"
+              style={{ background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)', color: 'white' }}
             >
-              <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent)', color: 'white' }}>
+              <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0 bg-white/20">
                 <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
               <div className="flex-1">
-                <span className="font-semibold text-lg block" style={{ color: 'var(--color-primary)' }}>{sessionInfo.talkPageLabel || 'Talk Page'}</span>
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>More information about this presentation</p>
+                <span className="font-semibold text-lg block">Browse Slides</span>
+                <p className="text-sm opacity-80">{slideCount} slides with full content</p>
               </div>
-              <svg className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              <svg className="w-5 h-5 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
-            </a>
-          )}
+            </Link>
 
-          {/* Presenter Website Link (if no talk page) */}
-          {!hasTalkPage && sessionInfo.speaker.links.website && (
-            <a
-              href={sessionInfo.speaker.links.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="card flex items-center gap-4 p-5 no-underline transition-all hover:shadow-lg"
-              style={{ borderTop: '4px solid var(--color-accent)' }}
-            >
-              <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent)', color: 'white' }}>
-                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            {/* Talk Page Link (if available) */}
+            {hasTalkPage && (
+              <a
+                href={sessionInfo.talkPageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card card-hover flex items-center gap-4 p-5 no-underline"
+                style={{ borderTop: '4px solid var(--color-accent)' }}
+              >
+                <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent)', color: 'white' }}>
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <span className="font-semibold text-lg block" style={{ color: 'var(--color-primary)' }}>{sessionInfo.talkPageLabel || 'Talk Page'}</span>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>More about this presentation</p>
+                </div>
+                <svg className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
-              </div>
-              <div className="flex-1">
-                <span className="font-semibold text-lg block" style={{ color: 'var(--color-primary)' }}>
-                  {new URL(sessionInfo.speaker.links.website).hostname.replace('www.', '')}
-                </span>
-                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Presenter website with all links and resources</p>
-              </div>
-              <svg className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-          )}
+              </a>
+            )}
+
+            {/* Presenter Website Link (if no talk page) */}
+            {!hasTalkPage && sessionInfo.speaker.links.website && (
+              <a
+                href={sessionInfo.speaker.links.website}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="card card-hover flex items-center gap-4 p-5 no-underline"
+                style={{ borderTop: '4px solid var(--color-accent)' }}
+              >
+                <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent)', color: 'white' }}>
+                  <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <span className="font-semibold text-lg block" style={{ color: 'var(--color-primary)' }}>
+                    {new URL(sessionInfo.speaker.links.website).hostname.replace('www.', '')}
+                  </span>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Presenter website</p>
+                </div>
+                <svg className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
+          </div>
 
           {/* Key Topics (if available) */}
           {hasKeyTopics && (
@@ -190,26 +213,6 @@ export default function HomePage() {
               )}
             </div>
           )}
-
-          {/* Browse Slides CTA */}
-          <Link
-            to="/slides"
-            className="card card-hover flex items-center gap-6 no-underline"
-            style={{ background: 'linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%)', color: 'white' }}
-          >
-            <div className="w-16 h-16 rounded-xl flex items-center justify-center bg-white/20">
-              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-xl font-semibold">Browse Presentation Slides</h3>
-              <p className="opacity-80">{slideCount} slides with full content and speaker notes</p>
-            </div>
-            <svg className="w-6 h-6 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
 
           {/* Collapsible About Section */}
           {sessionInfo.abstract && (

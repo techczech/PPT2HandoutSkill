@@ -2,6 +2,12 @@
 // Fill in details relevant to your presentation
 // Optional fields can be left empty ("") or arrays empty ([])
 
+interface FeaturedLink {
+  name: string;
+  url: string;
+  description?: string;
+}
+
 export const sessionInfo = {
   // Main presentation title
   title: "{{TITLE}}",
@@ -37,21 +43,25 @@ export const sessionInfo = {
 
   // Key topics covered in the presentation (optional)
   // These will be displayed as highlights on the home page
-  keyTopics: [
-    // "Topic 1: Brief description",
-    // "Topic 2: Brief description",
-  ],
+  keyTopics: [] as string[],
+  // Example:
+  // keyTopics: [
+  //   "Topic 1: Brief description",
+  //   "Topic 2: Brief description",
+  // ],
 
   // Featured links section (optional)
   // Use for related resources, example apps, tools, etc.
   featuredLinks: {
     title: "", // e.g., "Related Resources", "Example Apps", "Tools Mentioned"
-    items: [
-      // {
-      //   name: "Resource Name",
-      //   url: "https://example.com",
-      //   description: "Brief description",
-      // },
-    ],
+    items: [] as FeaturedLink[],
+    // Example:
+    // items: [
+    //   {
+    //     name: "Resource Name",
+    //     url: "https://example.com",
+    //     description: "Brief description",
+    //   },
+    // ],
   },
 };

@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import SlidesPage from './pages/SlidesPage';
 import ResourcesPage from './pages/ResourcesPage';
 import MediaGalleryPage from './pages/MediaGalleryPage';
+import AboutPage from './pages/AboutPage';
 import { useGlobalKeyboard } from './hooks/useGlobalKeyboard';
 import { useSearch } from './hooks/useSearch';
 import SearchModal from './components/search/SearchModal';
@@ -43,6 +44,7 @@ function AppContent() {
           <Route path="/slides/:slideNumber" element={<SlidesPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
           <Route path="/media-gallery" element={<MediaGalleryPage />} />
+          <Route path="/about" element={<AboutPage />} />
         </Routes>
       </main>
       <Footer />
