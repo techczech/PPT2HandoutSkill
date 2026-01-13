@@ -32,9 +32,9 @@ export default function MediaSlide({ slide }: MediaSlideProps) {
             ))}
           </div>
         </div>
-        {/* Text content if any */}
+        {/* Text content if any - larger text for readability alongside media */}
         {otherContent.length > 0 && (
-          <div className="lg:w-2/5 shrink-0 overflow-y-auto">
+          <div className="lg:w-2/5 shrink-0 overflow-y-auto media-slide-text">
             <div className="space-y-5">
               {otherContent.map((content, index) => (
                 <ContentRenderer key={index} content={content} />

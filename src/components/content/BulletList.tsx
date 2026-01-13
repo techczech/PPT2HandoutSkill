@@ -1,4 +1,5 @@
 import type { ListContent, ListItem } from '../../data/types';
+import LinkifiedText from './LinkifiedText';
 
 interface BulletListProps {
   content: ListContent;
@@ -8,22 +9,25 @@ interface BulletListProps {
 function ListItemComponent({
   item,
   theme,
+  level = 0,
 }: {
   item: ListItem;
   theme: 'light' | 'dark';
+  level?: number;
 }) {
   const textColor = theme === 'dark' ? 'opacity-90' : '';
 
   return (
-    <li className={`${textColor} leading-relaxed`} style={{ color: theme === 'dark' ? 'inherit' : 'var(--color-text)' }}>
-      <span>{item.text}</span>
+    <li className={`${textColor} leading-relaxed bullet-item ${level > 0 ? 'bullet-nested' : ''}`} style={{ color: theme === 'dark' ? 'inherit' : 'var(--color-text)' }}>
+      <LinkifiedText text={item.text} />
       {item.children && item.children.length > 0 && (
-        <ul className="mt-2 list-disc list-outside space-y-2 ml-5">
+        <ul className="mt-2 space-y-2 ml-5 bullet-list bullet-list-nested">
           {item.children.map((child, idx) => (
             <ListItemComponent
               key={idx}
               item={child}
               theme={theme}
+              level={level + 1}
             />
           ))}
         </ul>
@@ -43,7 +47,7 @@ export default function BulletList({ content, theme = 'light' }: BulletListProps
         className="leading-relaxed"
         style={{ color: theme === 'dark' ? 'inherit' : 'var(--color-text)' }}
       >
-        {items[0].text}
+        <LinkifiedText text={items[0].text} />
       </p>
     );
   }
@@ -51,7 +55,7 @@ export default function BulletList({ content, theme = 'light' }: BulletListProps
   // For multiple items, use proper list
   if (isNumbered) {
     return (
-      <ol className="list-decimal list-outside space-y-3 ml-5">
+      <ol className="numbered-list space-y-3 ml-5">
         {items.map((item, index) => (
           <ListItemComponent
             key={index}
@@ -64,7 +68,7 @@ export default function BulletList({ content, theme = 'light' }: BulletListProps
   }
 
   return (
-    <ul className="list-disc list-outside space-y-3 ml-5">
+    <ul className={`bullet-list space-y-3 ml-5 ${theme === 'dark' ? 'bullet-list-dark' : ''}`}>
       {items.map((item, index) => (
         <ListItemComponent
           key={index}

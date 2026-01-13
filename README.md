@@ -5,12 +5,27 @@ Convert PowerPoint presentations into interactive React handout websites with au
 ## Features
 
 - **Interactive slide viewer** with keyboard navigation and progress tracking
+- **Expandable sidebar** - navigate by section or individual slides
+- **Search functionality** - press `/` to search all slides, content, and speaker notes
+- **Media gallery** - browse all images and videos in a filterable grid view
+- **Auto-linkified URLs** - all URLs in content become clickable links (open in new tab)
+- **Styled bullet points** - accent-colored square markers
 - **Automatic resource extraction** - tools, links, and key terms pulled from slides
 - **Responsive design** for mobile and desktop
 - **Multiple content types** - text, images, SmartArt diagrams, videos
 - **Section-based navigation** with sidebar menu
 - **One-click deployment** to Vercel or Cloudflare Pages
 - **Claude Code skill** for guided setup
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|-----|--------|
+| `←` `→` `Space` | Navigate slides |
+| `↑` `↓` | Navigate sections |
+| `/` | Open search |
+| `Home` `End` | Go to first/last slide |
+| `Esc` | Close search modal |
 
 ## Quick Start
 
@@ -161,12 +176,13 @@ The skill walks you through:
 │   │   ├── sessionInfo.ts      # Your session details (edit this)
 │   │   └── types.ts            # TypeScript interfaces
 │   ├── components/
-│   │   ├── content/            # Content renderers (lists, images, etc.)
-│   │   ├── layout/             # Layout components (header, nav, etc.)
+│   │   ├── content/            # Content renderers (lists, images, LinkifiedText)
+│   │   ├── layout/             # Layout components (header, nav, sidebar, etc.)
+│   │   ├── search/             # Search modal component
 │   │   └── slides/             # Slide type components
-│   ├── pages/                  # Page components (Home, Slides, Resources)
-│   ├── hooks/                  # React hooks (navigation state)
-│   ├── utils/                  # Utilities (resource extraction, helpers)
+│   ├── pages/                  # Page components (Home, Slides, Resources, MediaGallery)
+│   ├── hooks/                  # React hooks (navigation, keyboard, search)
+│   ├── utils/                  # Utilities (resource extraction, linkify, helpers)
 │   ├── App.tsx                 # Main router
 │   └── index.css               # Global styles (customize colors here)
 ├── scripts/

@@ -5,8 +5,10 @@ import ProgressBar from './ProgressBar';
 import SlideContainer from './SlideContainer';
 
 export default function SlideViewContent() {
-  useKeyboard();
   const { currentSlide } = useNavigation();
+
+  // Slide-specific keyboard navigation (arrows, space, home/end)
+  useKeyboard();
 
   if (!currentSlide) {
     return (

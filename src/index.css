@@ -101,6 +101,26 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 500;
 }
 
+/* Nav icon buttons (search, help) */
+.nav-icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.nav-icon-button:hover {
+  color: var(--color-primary);
+  background: var(--color-surface);
+}
+
 /* Card styling */
 .card {
   background: var(--color-card);
@@ -211,7 +231,81 @@ video {
   margin: 2rem 0;
 }
 
-/* List styles */
+/* Media slide text - larger for readability next to images */
+.media-slide-text {
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+.media-slide-text .bullet-item {
+  font-size: 1.15rem;
+}
+
+.media-slide-text p {
+  font-size: 1.15rem;
+}
+
+/* List styles - accent-colored squares */
+.bullet-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.bullet-list > .bullet-item {
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.bullet-list > .bullet-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-accent);
+  border-radius: 2px;
+}
+
+/* Nested bullets - smaller and lighter */
+.bullet-list-nested > .bullet-item::before {
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-accent-light);
+  top: 0.6em;
+}
+
+/* Dark theme bullets (white/light squares) */
+.bullet-list-dark > .bullet-item::before {
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.bullet-list-dark .bullet-list-nested > .bullet-item::before {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Numbered list styling */
+.numbered-list {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: item;
+}
+
+.numbered-list > .bullet-item {
+  position: relative;
+  padding-left: 2rem;
+  counter-increment: item;
+}
+
+.numbered-list > .bullet-item::before {
+  content: counter(item) '.';
+  position: absolute;
+  left: 0;
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* Legacy content-list styles (fallback) */
 .content-list {
   list-style-type: disc;
   padding-left: 1.5rem;

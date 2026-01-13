@@ -1,4 +1,5 @@
 import type { HeadingContent } from '../../data/types';
+import LinkifiedText from './LinkifiedText';
 
 interface HeadingProps {
   content: HeadingContent;
@@ -20,18 +21,20 @@ export default function Heading({ content, theme = 'light' }: HeadingProps) {
   const className = `${sizeClasses[content.level] || sizeClasses[3]} ${textColor} leading-tight`;
   const level = Math.min(Math.max(content.level, 1), 6);
 
+  const textContent = <LinkifiedText text={content.text} />;
+
   switch (level) {
     case 1:
-      return <h1 className={className}>{content.text}</h1>;
+      return <h1 className={className}>{textContent}</h1>;
     case 2:
-      return <h2 className={className}>{content.text}</h2>;
+      return <h2 className={className}>{textContent}</h2>;
     case 3:
-      return <h3 className={className}>{content.text}</h3>;
+      return <h3 className={className}>{textContent}</h3>;
     case 4:
-      return <h4 className={className}>{content.text}</h4>;
+      return <h4 className={className}>{textContent}</h4>;
     case 5:
-      return <h5 className={className}>{content.text}</h5>;
+      return <h5 className={className}>{textContent}</h5>;
     default:
-      return <h6 className={className}>{content.text}</h6>;
+      return <h6 className={className}>{textContent}</h6>;
   }
 }

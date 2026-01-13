@@ -4,22 +4,62 @@ import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import SlidesPage from './pages/SlidesPage';
 import ResourcesPage from './pages/ResourcesPage';
+import MediaGalleryPage from './pages/MediaGalleryPage';
+import { useGlobalKeyboard } from './hooks/useGlobalKeyboard';
+import { useSearch } from './hooks/useSearch';
+import SearchModal from './components/search/SearchModal';
+import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
 
-function App() {
+function AppContent() {
+  const keyboard = useGlobalKeyboard();
+  const search = useSearch();
+
+  // Sync keyboard state with search state
+  const isSearchOpen = keyboard.isSearchOpen;
+  const closeSearch = () => {
+    keyboard.closeSearch();
+    search.close();
+  };
+
+  // Open search when keyboard shortcut triggers
+  if (isSearchOpen && !search.isOpen) {
+    search.open();
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
-      <SiteHeader />
+      <SiteHeader onOpenSearch={keyboard.openSearch} onOpenHelp={keyboard.openHelp} />
       <main className="flex-1">
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/slides" element={<SlidesPage />} />
           <Route path="/slides/:slideNumber" element={<SlidesPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
+          <Route path="/media-gallery" element={<MediaGalleryPage />} />
         </Routes>
       </main>
       <Footer />
+
+      {/* Global Search Modal */}
+      <SearchModal
+        isOpen={isSearchOpen}
+        query={search.query}
+        results={search.results}
+        onQueryChange={search.setQuery}
+        onClose={closeSearch}
+      />
+
+      {/* Keyboard Shortcuts Help Modal */}
+      <KeyboardShortcutsModal
+        isOpen={keyboard.isHelpOpen}
+        onClose={keyboard.closeHelp}
+      />
     </div>
   );
+}
+
+function App() {
+  return <AppContent />;
 }
 
 export default App;
