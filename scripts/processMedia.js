@@ -6,7 +6,18 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.join(__dirname, '..');
 
-const SOURCE_DIR = path.join(ROOT_DIR, 'sourcematerials/media/46c366ca-cd48-4b1c-a15c-b666f12cc5d6');
+// Auto-detect UUID folder in sourcematerials/media/
+const mediaBaseDir = path.join(ROOT_DIR, 'sourcematerials/media');
+let SOURCE_DIR = null;
+if (fs.existsSync(mediaBaseDir)) {
+  const uuidFolders = fs.readdirSync(mediaBaseDir).filter(f =>
+    fs.statSync(path.join(mediaBaseDir, f)).isDirectory()
+  );
+  if (uuidFolders.length > 0) {
+    SOURCE_DIR = path.join(mediaBaseDir, uuidFolders[0]);
+    console.log(`Found media folder: ${uuidFolders[0]}`);
+  }
+}
 const DEST_IMAGES_SLIDES = path.join(ROOT_DIR, 'public/assets/images/slides');
 const DEST_IMAGES_ICONS = path.join(ROOT_DIR, 'public/assets/images/icons');
 const DEST_VIDEOS = path.join(ROOT_DIR, 'public/assets/videos');
@@ -19,7 +30,7 @@ const DATA_OUTPUT = path.join(ROOT_DIR, 'src/data/presentation.json');
 });
 
 // Copy and organize media files
-if (fs.existsSync(SOURCE_DIR)) {
+if (SOURCE_DIR && fs.existsSync(SOURCE_DIR)) {
   const files = fs.readdirSync(SOURCE_DIR);
   let imageCount = 0;
   let videoCount = 0;

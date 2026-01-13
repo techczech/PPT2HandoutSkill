@@ -1,14 +1,16 @@
 # PPT2Handout - PowerPoint to Handout Site Generator
 
-Convert PowerPoint presentations into interactive React handout websites.
+Convert PowerPoint presentations into interactive React handout websites with automatic resource extraction, responsive design, and easy deployment.
 
 ## Features
 
-- Interactive slide viewer with keyboard navigation
-- Automatic resource extraction (tools, links, terms)
-- Responsive design for mobile and desktop
-- One-click deployment to Vercel or Cloudflare Pages
-- Claude Code skill for guided setup
+- **Interactive slide viewer** with keyboard navigation and progress tracking
+- **Automatic resource extraction** - tools, links, and key terms pulled from slides
+- **Responsive design** for mobile and desktop
+- **Multiple content types** - text, images, SmartArt diagrams, videos
+- **Section-based navigation** with sidebar menu
+- **One-click deployment** to Vercel or Cloudflare Pages
+- **Claude Code skill** for guided setup
 
 ## Quick Start
 
@@ -22,41 +24,117 @@ npm install
 
 ### 2. Extract your PowerPoint
 
-**Option A: Using the built-in extractor**
+**Option A: Using the built-in Python extractor**
 
 ```bash
 pip install python-pptx
 python scripts/extract-pptx.py your-presentation.pptx sourcematerials/
 ```
 
-**Option B: Use your own extraction tool**
+This creates:
+- `sourcematerials/presentation.json` - structured slide content
+- `sourcematerials/media/{uuid}/` - extracted images, icons, videos
 
-Place your `presentation.json` and media files in `sourcematerials/`.
+**Option B: Use pre-extracted content**
+
+If you already have extracted content (e.g., from another tool), place files in:
+- `sourcematerials/presentation.json`
+- `sourcematerials/media/{any-folder-name}/` - media files
+
+The build process auto-detects media folders, so any folder name works.
 
 ### 3. Update session info
 
 Edit `src/data/sessionInfo.ts` with your presentation details:
-- Title and subtitle
-- Speaker information
-- Event details
-- Abstract
+
+```typescript
+export const sessionInfo = {
+  title: "Your Presentation Title",
+  subtitle: "Your subtitle or tagline",
+
+  speaker: {
+    name: "Your Name",
+    affiliation: "Your Organization",
+    email: "you@example.com",
+    links: { website: "https://yoursite.com" },
+    bio: `Your bio text...`,
+  },
+
+  event: {
+    name: "Conference Name",
+    date: "Friday, 9 January 2026",
+    time: "14:00 – 15:15",
+    location: "Room Name",
+    type: "Workshop",
+    sessionLink: "https://conference.com/session",
+  },
+
+  abstract: `Your session abstract...`,
+
+  exampleApps: [
+    { name: "App Name", url: "https://app.com", description: "Brief description" },
+  ],
+};
+```
 
 ### 4. Build and preview
 
 ```bash
-npm run build
-npm run dev
+npm run build    # Process media, compile TypeScript, bundle
+npm run dev      # Start local dev server
 ```
 
+The build process:
+1. **Processes media** - copies files to `public/assets/`, organizes by type
+2. **Transforms paths** - updates `presentation.json` with correct asset URLs
+3. **Compiles TypeScript** - type checks the codebase
+4. **Bundles with Vite** - creates optimized production build in `dist/`
+
 ### 5. Deploy
+
+**Cloudflare Pages:**
+```bash
+npx wrangler pages deploy dist --project-name=my-handout
+```
 
 **Vercel:**
 ```bash
 npx vercel --prod
 ```
 
-**Cloudflare Pages:**
+## Complete Workflow Example
+
+Here's a real-world example of converting a presentation:
+
 ```bash
+# 1. Clone template
+git clone https://github.com/techczech/PPT2HandoutSkill ltvibes
+cd ltvibes
+npm install
+
+# 2. Copy pre-extracted content (if using external extractor)
+mkdir -p sourcematerials
+cp /path/to/presentation.json sourcematerials/
+cp -r /path/to/media sourcematerials/
+
+# 3. Edit sessionInfo.ts with your details
+# (use your editor of choice)
+
+# 4. Build
+npm run build
+# Output:
+#   Found media folder: 79d04a3e-63a2-4dd4-aeee-e0fc24139adf
+#   Media processing complete!
+#     - Slide images: 65
+#     - Icons: 41
+#     - Videos: 10
+#   Presentation data transformed and saved!
+
+# 5. Test locally
+npm run dev
+# Visit http://localhost:5173
+
+# 6. Deploy to Cloudflare Pages
 npx wrangler pages deploy dist --project-name=my-handout
 ```
 
@@ -68,9 +146,10 @@ This template includes a Claude Code skill for guided setup:
 /pptx-to-handout
 ```
 
-The skill will walk you through:
+The skill walks you through:
+- Detecting input type (PPTX file, pre-extracted JSON, or fresh start)
 - Extracting content from your PPTX
-- Filling in session metadata
+- Filling in session metadata interactively
 - Building and deploying
 
 ## Project Structure
@@ -78,18 +157,40 @@ The skill will walk you through:
 ```
 ├── src/
 │   ├── data/
-│   │   ├── presentation.json   # Generated from PPTX
-│   │   ├── sessionInfo.ts      # Your session details
-│   │   └── types.ts            # TypeScript types
-│   ├── components/             # React components
-│   ├── pages/                  # Page components
-│   └── index.css               # Styles (customize colors here)
+│   │   ├── presentation.json   # Generated slide content (from build)
+│   │   ├── sessionInfo.ts      # Your session details (edit this)
+│   │   └── types.ts            # TypeScript interfaces
+│   ├── components/
+│   │   ├── content/            # Content renderers (lists, images, etc.)
+│   │   ├── layout/             # Layout components (header, nav, etc.)
+│   │   └── slides/             # Slide type components
+│   ├── pages/                  # Page components (Home, Slides, Resources)
+│   ├── hooks/                  # React hooks (navigation state)
+│   ├── utils/                  # Utilities (resource extraction, helpers)
+│   ├── App.tsx                 # Main router
+│   └── index.css               # Global styles (customize colors here)
 ├── scripts/
-│   ├── processMedia.js         # Build-time processor
+│   ├── processMedia.js         # Build-time media processor
 │   └── extract-pptx.py         # PPTX extraction script
-├── public/assets/              # Generated media files
-└── sourcematerials/            # Your PPTX export (gitignored)
+├── public/assets/              # Generated media files (from build)
+│   ├── images/slides/          # Slide images
+│   ├── images/icons/           # SmartArt icons (sa_*.png)
+│   └── videos/                 # Video files
+├── sourcematerials/            # Your input files (gitignored)
+│   ├── presentation.json       # Extracted slide content
+│   └── media/{uuid}/           # Extracted media files
+└── dist/                       # Production build output
 ```
+
+## Media File Conventions
+
+The `processMedia.js` script organizes files by type:
+
+| File Pattern | Destination | Description |
+|--------------|-------------|-------------|
+| `*.mp4` | `/assets/videos/` | Video files |
+| `sa_*.png`, `sa_*.jpg` | `/assets/images/icons/` | SmartArt icons |
+| Other images | `/assets/images/slides/` | Slide images |
 
 ## Customization
 
@@ -99,21 +200,84 @@ Edit the CSS variables in `src/index.css`:
 
 ```css
 :root {
-  --color-primary: #1e3a5f;
-  --color-accent: #e07a38;
-  /* ... */
+  --color-primary: #1e3a5f;    /* Main brand color */
+  --color-accent: #e07a38;      /* Accent/highlight color */
+  --color-surface: #faf9f7;     /* Background color */
+  --color-card: #ffffff;        /* Card background */
+  --color-text: #1a1a1a;        /* Primary text */
+  --color-text-muted: #6b7280;  /* Secondary text */
 }
 ```
 
 ### Fonts
 
-The default fonts are Inter and Playfair Display. Modify the Google Fonts import in `src/index.css` to change.
+The default fonts are Inter (sans-serif) and Playfair Display (serif). Modify the Google Fonts import in `src/index.css` to change:
+
+```css
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap');
+```
+
+### Slide Layouts
+
+The site supports multiple slide layouts (defined in `src/components/slides/`):
+- `TitleSlide` - Title page with speaker info
+- `SectionHeader` - Section dividers
+- `ContentSlide` - Text and bullet points
+- `MediaSlide` - Image-focused slides
+- `SidebarSlide` - Two-column layout
+- `QuoteSlide` - Quotes and testimonials
+
+## presentation.json Format
+
+The expected JSON structure:
+
+```json
+{
+  "metadata": {
+    "id": "uuid",
+    "source_file": "presentation.pptx",
+    "processed_at": "2026-01-13T18:27:57.617218",
+    "stats": { "slide_count": 102, "image_count": 65 }
+  },
+  "sections": [
+    {
+      "title": "Section Name",
+      "slides": [
+        {
+          "order": 1,
+          "title": "Slide Title",
+          "layout": "Title and Content",
+          "notes": "Speaker notes...",
+          "content": [
+            { "type": "heading", "text": "Heading", "level": 1 },
+            { "type": "list", "style": "bullet", "items": [...] },
+            { "type": "image", "src": "media/uuid/slide_1.png", "alt": "..." },
+            { "type": "video", "src": "media/uuid/video.mp4", "title": "..." },
+            { "type": "smart_art", "layout": "...", "nodes": [...] }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
 
 ## Requirements
 
-- Node.js 18+
-- Python 3.8+ (for PPTX extraction)
-- python-pptx (`pip install python-pptx`)
+- **Node.js 18+** - for building and running the site
+- **Python 3.8+** - for PPTX extraction (optional if using pre-extracted content)
+- **python-pptx** - `pip install python-pptx`
+
+## Troubleshooting
+
+### Media not processing
+If you see "Source media directory not found", ensure your media files are in `sourcematerials/media/{folder-name}/`. The script auto-detects any folder name.
+
+### Images not displaying
+Run `npm run build` before `npm run dev` to ensure media is copied to `public/assets/`.
+
+### TypeScript errors
+The template uses strict TypeScript. Check `src/data/types.ts` for expected interfaces.
 
 ## License
 
