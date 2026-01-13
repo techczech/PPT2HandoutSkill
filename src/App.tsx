@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import SiteHeader from './components/layout/SiteHeader';
 import Footer from './components/layout/Footer';
@@ -9,10 +10,16 @@ import { useGlobalKeyboard } from './hooks/useGlobalKeyboard';
 import { useSearch } from './hooks/useSearch';
 import SearchModal from './components/search/SearchModal';
 import KeyboardShortcutsModal from './components/KeyboardShortcutsModal';
+import { sessionInfo } from './data/sessionInfo';
 
 function AppContent() {
   const keyboard = useGlobalKeyboard();
   const search = useSearch();
+
+  // Set document title from sessionInfo
+  useEffect(() => {
+    document.title = sessionInfo.title;
+  }, []);
 
   // Sync keyboard state with search state
   const isSearchOpen = keyboard.isSearchOpen;
