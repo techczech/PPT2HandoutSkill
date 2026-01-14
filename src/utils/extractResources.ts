@@ -223,7 +223,7 @@ export function extractResources(presentation: Presentation): ExtractedResources
       const slideTexts = [slide.title, slide.notes, ...extractTextFromContent(slide.content)];
       const slideText = slideTexts.join(' ');
 
-      // Extract images from this slide
+      // Extract images from this slide (and quotes from images)
       for (const block of slide.content) {
         if (block.type === 'image') {
           const img = block as ImageContent;
@@ -236,6 +236,16 @@ export function extractResources(presentation: Presentation): ExtractedResources
             slideTitle: slide.title,
             sectionTitle: section.title,
           });
+
+          // Extract quotes from images (tweets, messages, etc.)
+          if (img.quote_text && img.quote_text.length > 10) {
+            foundQuotes.set(img.quote_text.substring(0, 50), {
+              text: img.quote_text,
+              attribution: img.quote_attribution,
+              slideIndex,
+              slideTitle: slide.title,
+            });
+          }
         }
       }
 

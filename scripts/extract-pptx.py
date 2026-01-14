@@ -26,6 +26,8 @@ import os
 import json
 import uuid
 import re
+import base64
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -37,6 +39,119 @@ try:
 except ImportError:
     print("Error: python-pptx is required. Install with: pip install python-pptx")
     sys.exit(1)
+
+# Optional: Claude API for image analysis
+ANTHROPIC_AVAILABLE = False
+anthropic_client = None
+try:
+    import anthropic
+    ANTHROPIC_AVAILABLE = True
+except ImportError:
+    pass
+
+# Global flag for image analysis
+ANALYZE_IMAGES = False
+
+
+def init_anthropic():
+    """Initialize Anthropic client if API key is available."""
+    global anthropic_client
+    if ANTHROPIC_AVAILABLE and os.environ.get('ANTHROPIC_API_KEY'):
+        anthropic_client = anthropic.Anthropic()
+        return True
+    return False
+
+
+def analyze_image(image_blob, ext, slide_title=None):
+    """
+    Analyze image using Claude's vision API.
+    Returns a dict with description and optional quote extraction.
+    """
+    if not anthropic_client:
+        return None
+
+    # Map extensions to media types
+    media_type_map = {
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'webp': 'image/webp'
+    }
+
+    media_type = media_type_map.get(ext.lower())
+    if not media_type:
+        return None
+
+    try:
+        # Encode image to base64
+        image_data = base64.standard_b64encode(image_blob).decode('utf-8')
+
+        context = f" from slide '{slide_title}'" if slide_title else ""
+
+        response = anthropic_client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=500,
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image",
+                            "source": {
+                                "type": "base64",
+                                "media_type": media_type,
+                                "data": image_data
+                            }
+                        },
+                        {
+                            "type": "text",
+                            "text": f"""Analyze this presentation slide image{context}. Respond in JSON format:
+
+{{
+  "description": "Brief description of what the image shows",
+  "has_quote": true/false,
+  "quote_text": "The verbatim quote/message text if present",
+  "quote_attribution": "Who said it (name, @handle, title)"
+}}
+
+Focus on:
+1. Tweets - extract the full tweet text and @handle
+2. Slack/chat messages - extract the message and sender name
+3. Screenshots with quotes - extract any quotable statements
+4. Social media posts - extract the post content and author
+
+Examples:
+- Tweet: {{"description": "Tweet screenshot", "has_quote": true, "quote_text": "ChatGPT launched on wednesday. today it crossed 1 million users!", "quote_attribution": "Sam Altman (@sama)"}}
+- Slack: {{"description": "Slack message screenshot", "has_quote": true, "quote_text": "ChatGPT went viral. 100k people have tried this so far.", "quote_attribution": "Evan Morikawa, OpenAI"}}
+- Chart: {{"description": "Bar chart showing AI adoption rates", "has_quote": false}}
+
+Return ONLY valid JSON, no other text."""
+                        }
+                    ]
+                }
+            ]
+        )
+
+        # Parse JSON response
+        response_text = response.content[0].text.strip()
+        # Handle potential markdown code blocks
+        if response_text.startswith('```'):
+            response_text = response_text.split('```')[1]
+            if response_text.startswith('json'):
+                response_text = response_text[4:]
+            response_text = response_text.strip()
+
+        result = json.loads(response_text)
+        return result
+
+    except json.JSONDecodeError as e:
+        print(f"    Warning: Could not parse image analysis JSON: {e}")
+        # Return basic description if JSON parsing fails
+        return {"description": response.content[0].text.strip() if response else None}
+    except Exception as e:
+        print(f"    Warning: Image analysis failed: {e}")
+        return None
 
 
 def slugify(text):
@@ -67,7 +182,7 @@ def extract_text_from_shape(shape):
     return paragraphs if paragraphs else None
 
 
-def extract_image(shape, media_dir, slide_num, shape_idx):
+def extract_image(shape, media_dir, slide_num, shape_idx, slide_title=None):
     """Extract image from shape and save to media directory."""
     try:
         if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
@@ -79,12 +194,37 @@ def extract_image(shape, media_dir, slide_num, shape_idx):
             with open(filepath, 'wb') as f:
                 f.write(image.blob)
 
-            return {
+            # Analyze image with Claude if enabled
+            description = None
+            quote_text = None
+            quote_attribution = None
+
+            if ANALYZE_IMAGES:
+                print(f"    Analyzing image: {filename}...")
+                analysis = analyze_image(image.blob, ext, slide_title)
+                if analysis:
+                    description = analysis.get('description')
+                    if analysis.get('has_quote') and analysis.get('quote_text'):
+                        quote_text = analysis.get('quote_text')
+                        quote_attribution = analysis.get('quote_attribution')
+                        print(f"    -> Quote: \"{quote_text[:60]}...\" - {quote_attribution}")
+                    elif description:
+                        print(f"    -> {description[:80]}...")
+
+            result = {
                 'type': 'image',
                 'src': f"./{filename}",
                 'alt': shape.name or f"Slide {slide_num} image",
-                'caption': None
+                'caption': None,
+                'description': description
             }
+
+            # Add quote fields if present
+            if quote_text:
+                result['quote_text'] = quote_text
+                result['quote_attribution'] = quote_attribution
+
+            return result
     except Exception as e:
         print(f"  Warning: Could not extract image: {e}")
 
@@ -143,7 +283,7 @@ def process_slide(slide, slide_num, media_dir):
 
         # Images
         if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
-            img_content = extract_image(shape, media_dir, slide_num, idx)
+            img_content = extract_image(shape, media_dir, slide_num, idx, title)
             if img_content:
                 content.append(img_content)
 
@@ -288,15 +428,40 @@ def extract_pptx(input_path, output_dir):
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(__doc__)
-        print("\nUsage: python extract-pptx.py <input.pptx> [output_dir]")
-        sys.exit(1)
+    global ANALYZE_IMAGES
 
-    input_path = sys.argv[1]
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else "sourcematerials"
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument('input', help='Input PowerPoint file (.pptx)')
+    parser.add_argument('output', nargs='?', default='sourcematerials',
+                        help='Output directory (default: sourcematerials)')
+    parser.add_argument('--analyze-images', action='store_true',
+                        help='Analyze images with Claude AI to generate descriptions. '
+                             'Requires ANTHROPIC_API_KEY environment variable.')
 
-    extract_pptx(input_path, output_dir)
+    args = parser.parse_args()
+
+    # Initialize image analysis if requested
+    if args.analyze_images:
+        if not ANTHROPIC_AVAILABLE:
+            print("Error: --analyze-images requires the anthropic package.")
+            print("Install with: pip install anthropic")
+            sys.exit(1)
+
+        if not os.environ.get('ANTHROPIC_API_KEY'):
+            print("Error: --analyze-images requires ANTHROPIC_API_KEY environment variable.")
+            sys.exit(1)
+
+        if init_anthropic():
+            ANALYZE_IMAGES = True
+            print("Image analysis enabled (using Claude AI)")
+            print()
+        else:
+            print("Warning: Could not initialize Anthropic client. Continuing without image analysis.")
+
+    extract_pptx(args.input, args.output)
 
 
 if __name__ == "__main__":

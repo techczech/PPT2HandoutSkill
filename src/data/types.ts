@@ -57,6 +57,8 @@ export interface ImageContent {
   alt: string;
   caption: string;
   description?: string; // AI-generated description of image content
+  quote_text?: string; // Extracted quote from image (tweets, messages, etc.)
+  quote_attribution?: string; // Who said the quote
 }
 
 export interface SmartArtContent {
