@@ -2,17 +2,29 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Presentation, Section, Slide, ContentBlock, ImageContent, VideoContent } from '../data/types';
 import presentationData from '../data/presentation.json';
+import entitiesData from '../data/entities.json';
 
 interface MediaItem {
   type: 'image' | 'video';
   src: string;
   alt?: string;
   caption?: string;
+  description?: string;  // AI-generated description from entities.json
   title?: string;
   slideIndex: number;
   slideTitle: string;
   sectionTitle: string;
 }
+
+// Get AI-generated descriptions from entities.json
+interface EntityImage {
+  src: string;
+  description: string;
+  slideIndex: number;
+  containsQuote?: boolean;
+}
+
+const entityImages = (entitiesData.images || []) as EntityImage[];
 
 function extractMedia(content: ContentBlock): (ImageContent | VideoContent)[] {
   if (content.type === 'image') {
@@ -26,7 +38,7 @@ function extractMedia(content: ContentBlock): (ImageContent | VideoContent)[] {
 
 export default function MediaGalleryPage() {
   const presentation = presentationData as Presentation;
-  const [filter, setFilter] = useState<'all' | 'images' | 'videos'>('all');
+  const [filter, setFilter] = useState<'all' | 'images' | 'videos' | 'key'>('all');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
   // Extract all media from the presentation
@@ -40,11 +52,14 @@ export default function MediaGalleryPage() {
           const mediaItems = extractMedia(content);
           mediaItems.forEach(media => {
             if (media.type === 'image') {
+              // Find AI-generated description from entities.json
+              const entityImage = entityImages.find(ei => ei.src === media.src);
               items.push({
                 type: 'image',
                 src: media.src,
                 alt: media.alt,
                 caption: media.caption,
+                description: entityImage?.description,
                 slideIndex: globalIndex,
                 slideTitle: slide.title || 'Untitled slide',
                 sectionTitle: section.title,
@@ -71,11 +86,13 @@ export default function MediaGalleryPage() {
   const filteredMedia = useMemo(() => {
     if (filter === 'all') return allMedia;
     if (filter === 'images') return allMedia.filter(m => m.type === 'image');
+    if (filter === 'key') return allMedia.filter(m => m.type === 'image' && m.description);
     return allMedia.filter(m => m.type === 'video');
   }, [allMedia, filter]);
 
   const imageCount = allMedia.filter(m => m.type === 'image').length;
   const videoCount = allMedia.filter(m => m.type === 'video').length;
+  const keyCount = allMedia.filter(m => m.type === 'image' && m.description).length;
 
   return (
     <div className="page-container">
@@ -101,7 +118,7 @@ export default function MediaGalleryPage() {
       {/* Content */}
       <div className="page-content">
         {/* Filter buttons */}
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg transition-colors ${
@@ -112,6 +129,18 @@ export default function MediaGalleryPage() {
           >
             All ({allMedia.length})
           </button>
+          {keyCount > 0 && (
+            <button
+              onClick={() => setFilter('key')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                filter === 'key'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              ✨ Key Images ({keyCount})
+            </button>
+          )}
           <button
             onClick={() => setFilter('images')}
             className={`px-4 py-2 rounded-lg transition-colors ${
@@ -176,12 +205,18 @@ export default function MediaGalleryPage() {
               {/* Caption overlay */}
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-3">
                 <p className="text-white text-sm truncate">
-                  {item.slideTitle}
+                  {item.description || item.slideTitle}
                 </p>
                 <p className="text-white/60 text-xs truncate">
-                  Slide {item.slideIndex + 1}
+                  Slide {item.slideIndex + 1} · {item.sectionTitle}
                 </p>
               </div>
+              {/* Badge for images with AI descriptions */}
+              {item.description && (
+                <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
+                  ✨ Key
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -228,8 +263,15 @@ export default function MediaGalleryPage() {
               </video>
             )}
 
-            <div className="mt-4 text-center">
-              <p className="text-white font-medium">{selectedMedia.slideTitle}</p>
+            <div className="mt-4 text-center max-w-2xl mx-auto">
+              {selectedMedia.description ? (
+                <>
+                  <p className="text-white font-medium">{selectedMedia.description}</p>
+                  <p className="text-white/60 text-sm mt-1">{selectedMedia.slideTitle}</p>
+                </>
+              ) : (
+                <p className="text-white font-medium">{selectedMedia.slideTitle}</p>
+              )}
               <p className="text-white/60 text-sm">{selectedMedia.sectionTitle}</p>
               <Link
                 to={`/slides/${selectedMedia.slideIndex + 1}`}

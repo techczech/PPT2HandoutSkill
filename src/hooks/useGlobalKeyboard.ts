@@ -86,9 +86,9 @@ export function useGlobalKeyboard(): GlobalKeyboardState {
           }
           break;
 
-        // Resources: r
-        case 'r':
-        case 'R':
+        // Index: i
+        case 'i':
+        case 'I':
           if (!event.ctrlKey && !event.metaKey) {
             event.preventDefault();
             navigate('/resources');

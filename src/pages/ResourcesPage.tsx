@@ -4,7 +4,7 @@ import { extractResources } from '../utils/extractResources';
 import presentationData from '../data/presentation.json';
 import type { Presentation, ExtractedResources } from '../data/types';
 import { sessionInfo } from '../data/sessionInfo';
-import ResourceCard, { type ResourceItem, type ResourceType } from '../components/resources/ResourceCard';
+import ResourceListItem, { type ResourceItem, type ResourceType } from '../components/resources/ResourceListItem';
 import ResourceDetailModal from '../components/resources/ResourceDetailModal';
 
 type FilterType = 'all' | Exclude<ResourceType, 'image'>;
@@ -31,6 +31,7 @@ const FILTER_TABS: FilterTab[] = [
 export default function ResourcesPage() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [selectedItem, setSelectedItem] = useState<ResourceItem | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const resources = useMemo(() => {
     return extractResources(presentationData as Presentation);
@@ -53,11 +54,47 @@ export default function ResourcesPage() {
     return items;
   }, [resources]);
 
-  // Filter items based on active filter
+  // Get searchable text from an item
+  const getSearchableText = (item: ResourceItem): string => {
+    switch (item.type) {
+      case 'person':
+        return `${item.data.name} ${item.data.role || ''} ${item.data.context || ''}`;
+      case 'organization':
+        return `${item.data.name} ${item.data.context || ''}`;
+      case 'place':
+        return `${item.data.name} ${item.data.type || ''}`;
+      case 'date':
+        return `${item.data.formatted} ${item.data.context || ''}`;
+      case 'quote':
+        return `${item.data.text} ${item.data.attribution || ''}`;
+      case 'tool':
+        return `${item.data.name} ${item.data.description || ''}`;
+      case 'term':
+        return `${item.data.term} ${item.data.context || ''}`;
+      case 'link':
+        return `${item.data.label} ${item.data.url}`;
+      default:
+        return '';
+    }
+  };
+
+  // Filter items based on active filter and search query
   const filteredItems = useMemo(() => {
-    if (activeFilter === 'all') return allItems;
-    return allItems.filter(item => item.type === activeFilter);
-  }, [allItems, activeFilter]);
+    let items = allItems;
+
+    // Filter by type
+    if (activeFilter !== 'all') {
+      items = items.filter(item => item.type === activeFilter);
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      items = items.filter(item => getSearchableText(item).toLowerCase().includes(query));
+    }
+
+    return items;
+  }, [allItems, activeFilter, searchQuery]);
 
   // Get counts for each category (excluding images - shown in Media Gallery)
   const getCounts = (res: ExtractedResources): Record<FilterType, number> => ({
@@ -92,7 +129,7 @@ export default function ResourcesPage() {
             Back
           </Link>
         </div>
-        <h1 className="font-serif">Resources & Entities</h1>
+        <h1 className="font-serif">Index & Glossary</h1>
         <p className="mt-2 text-white/80">
           People, organizations, dates, quotes, and more from the {sessionType.toLowerCase()}
         </p>
@@ -100,6 +137,44 @@ export default function ResourcesPage() {
 
       {/* Content */}
       <div className="page-content">
+        {/* Search and Filter Row */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Search Input */}
+          <div className="relative flex-1 max-w-md">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            <input
+              type="text"
+              placeholder="Search within list..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              style={{ borderColor: 'var(--color-border)' }}
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Filter Tabs */}
         <div className="flex gap-2 flex-wrap">
           {FILTER_TABS.filter(tab => counts[tab.id] > 0 || tab.id === 'all').map(tab => {
@@ -134,15 +209,23 @@ export default function ResourcesPage() {
           })}
         </div>
 
-        {/* Gallery Grid */}
+        {/* Results count */}
+        {searchQuery && (
+          <p className="text-sm text-gray-500">
+            {filteredItems.length} result{filteredItems.length !== 1 ? 's' : ''} for "{searchQuery}"
+            {activeFilter !== 'all' && ` in ${FILTER_TABS.find(t => t.id === activeFilter)?.label}`}
+          </p>
+        )}
+
+        {/* List View */}
         {filteredItems.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
-            No items found in this category
+            {searchQuery ? `No results for "${searchQuery}"` : 'No items found in this category'}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="flex flex-col divide-y" style={{ borderColor: 'var(--color-border)' }}>
             {filteredItems.map((item, index) => (
-              <ResourceCard
+              <ResourceListItem
                 key={`${item.type}-${index}`}
                 item={item}
                 onClick={() => setSelectedItem(item)}

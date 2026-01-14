@@ -30,28 +30,28 @@ export default function SiteHeader({ onOpenSearch, onOpenHelp }: SiteHeaderProps
             className={isActive('/') && location.pathname === '/' ? 'active' : ''}
             title="Home (h)"
           >
-            Home
+            <u>H</u>ome
           </Link>
           <Link
             to="/slides"
             className={isActive('/slides') ? 'active' : ''}
             title="Slides (s)"
           >
-            Slides
+            <u>S</u>lides
+          </Link>
+          <Link
+            to="/resources"
+            className={isActive('/resources') ? 'active' : ''}
+            title="Index (i)"
+          >
+            <u>I</u>ndex
           </Link>
           <Link
             to="/media-gallery"
             className={isActive('/media-gallery') ? 'active' : ''}
             title="Media Gallery (m)"
           >
-            Media
-          </Link>
-          <Link
-            to="/resources"
-            className={isActive('/resources') ? 'active' : ''}
-            title="Resources (r)"
-          >
-            Resources
+            <u>M</u>edia
           </Link>
           <Link
             to="/about"

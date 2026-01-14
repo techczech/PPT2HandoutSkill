@@ -9,8 +9,8 @@ const shortcuts = [
   { category: 'Navigation', items: [
     { keys: ['h'], description: 'Go to Home' },
     { keys: ['s'], description: 'Go to Slides' },
+    { keys: ['i'], description: 'Go to Index' },
     { keys: ['m'], description: 'Go to Media Gallery' },
-    { keys: ['r'], description: 'Go to Resources' },
   ]},
   { category: 'Slide Navigation (on Slides page)', items: [
     { keys: ['←', '→'], description: 'Previous / Next slide' },
