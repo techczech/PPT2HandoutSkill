@@ -11,6 +11,7 @@ Convert PowerPoint presentations into interactive React handout websites with au
 - **Auto-linkified URLs** - all URLs in content become clickable links (open in new tab)
 - **Styled bullet points** - accent-colored square markers
 - **Automatic resource extraction** - tools, links, and key terms pulled from slides
+- **Automatic video compression** - compresses videos over 25MB for Cloudflare Pages compatibility
 - **Responsive design** for mobile and desktop
 - **Multiple content types** - text, images, SmartArt diagrams, videos
 - **Section-based navigation** with sidebar menu
@@ -101,9 +102,10 @@ npm run dev      # Start local dev server
 
 The build process:
 1. **Processes media** - copies files to `public/assets/`, organizes by type
-2. **Transforms paths** - updates `presentation.json` with correct asset URLs
-3. **Compiles TypeScript** - type checks the codebase
-4. **Bundles with Vite** - creates optimized production build in `dist/`
+2. **Compresses large videos** - automatically compresses videos over 25MB (requires ffmpeg)
+3. **Transforms paths** - updates `presentation.json` with correct asset URLs
+4. **Compiles TypeScript** - type checks the codebase
+5. **Bundles with Vite** - creates optimized production build in `dist/`
 
 ### 5. Deploy
 
@@ -283,6 +285,10 @@ The expected JSON structure:
 - **Node.js 18+** - for building and running the site
 - **Python 3.8+** - for PPTX extraction (optional if using pre-extracted content)
 - **python-pptx** - `pip install python-pptx`
+- **ffmpeg** - for automatic video compression (optional but recommended for Cloudflare Pages)
+  - macOS: `brew install ffmpeg`
+  - Ubuntu/Debian: `apt-get install ffmpeg`
+  - Windows: Download from [ffmpeg.org](https://ffmpeg.org/download.html)
 
 ## Troubleshooting
 
@@ -291,6 +297,9 @@ If you see "Source media directory not found", ensure your media files are in `s
 
 ### Images not displaying
 Run `npm run build` before `npm run dev` to ensure media is copied to `public/assets/`.
+
+### Large videos failing deployment
+Cloudflare Pages has a 25MB file size limit. The build process automatically compresses videos over this limit if ffmpeg is installed. If you see the warning "ffmpeg not found", install it to enable automatic compression.
 
 ### TypeScript errors
 The template uses strict TypeScript. Check `src/data/types.ts` for expected interfaces.

@@ -19,15 +19,27 @@ This skill creates a professional, responsive handout website from a PowerPoint 
 
 ## Workflow
 
-### Step 1: Determine Input Type
+### Step 1: Gather Key Information Upfront
 
-Ask the user which input they have:
+**IMPORTANT:** Before starting any work, ask the user these key questions to avoid back-and-forth later:
 
-1. **Pre-extracted JSON** - User has `presentation.json` + `media/` folder (from their own extraction tool)
-2. **Raw PPTX file** - Extract content using built-in Python script
-3. **Start fresh** - Clone template repository for manual setup
+1. **Project name** - What should the project/site be called? (e.g., "ai-workshop-2026")
+2. **Presentation title** - Main title for the handout site
+3. **Presenter name and profile link** - Full name and URL to link to (e.g., staff profile page, personal website)
+4. **Input type** - Which do you have?
+   - Pre-extracted JSON (already have `presentation.json` + `media/` folder)
+   - Raw PPTX file (needs extraction)
+   - Start fresh (clone template only)
+5. **Deployment target** - Where will this be deployed?
+   - Cloudflare Pages (has 25MB file limit, will auto-compress videos if ffmpeg available)
+   - Vercel (no file size limit)
+   - Other/none
+
+Use the AskUserQuestion tool to gather this information efficiently. This saves time by collecting all key details upfront.
 
 ### Step 2: Extract Content (if PPTX)
+
+Based on the answers from Step 1, proceed with extraction if needed.
 
 If user has a PPTX file, run the extraction script:
 
@@ -42,29 +54,22 @@ python scripts/extract-pptx.py <input.pptx> sourcematerials/
 - Some formatting may be simplified
 - Manual review is recommended
 
-### Step 3: Collect Session Metadata
+### Step 3: Review Extracted Content (Optional)
 
-Prompt the user for required information:
+If the presentation was extracted, review key points with the user:
+- Ask if the title and subtitle are correct
+- Check if speaker information is accurate
+- Verify any key topics or resources were captured correctly
 
-1. **Presentation title** - Main title for the site
-2. **Subtitle** - Tagline or description
-3. **Speaker name** - Presenter's full name
-4. **Speaker affiliation** - Organization/institution
-5. **Speaker email** - Contact email
-6. **Speaker website** - Personal/professional URL
-7. **Speaker bio** - Brief biography (1-2 paragraphs)
-8. **Event name** - Conference/workshop name
-9. **Event date** - Date of presentation
-10. **Event time** - Time slot
-11. **Event location** - Venue/room
-12. **Session type** - Workshop, Talk, Seminar, etc.
-13. **Session link** - URL to conference page (optional)
-14. **Abstract** - Session description (can be multi-paragraph)
-15. **Example apps** - Related apps to showcase (optional, array)
+This allows quick adjustments before final generation.
 
 ### Step 4: Generate sessionInfo.ts
 
-Create `src/data/sessionInfo.ts` from the template with collected metadata.
+Use the information collected in Step 1 plus any additional details to create `src/data/sessionInfo.ts`:
+- Use the presenter name and profile link from Step 1
+- Use the presentation title from Step 1
+- Fill in other details (affiliation, email, bio, event info, abstract)
+- If information is missing, use reasonable defaults or ask for critical fields only
 
 ### Step 5: Process Media
 
@@ -76,8 +81,14 @@ npm run build
 
 This will:
 - Copy media files to `public/assets/`
+- Automatically compress videos over 25MB (if ffmpeg is installed and deploying to Cloudflare Pages)
 - Transform paths in `presentation.json`
 - Build the React application
+
+**Note:** If deploying to Cloudflare Pages and large videos are detected, the script will:
+- Check if ffmpeg is available
+- Automatically compress videos to fit under the 25MB limit
+- Log compression progress and final sizes
 
 ### Step 6: Preview and Review
 
@@ -166,6 +177,10 @@ Default fonts are Inter (sans-serif) and Playfair Display (serif). Modify the Go
 - npm or yarn
 - Python 3.8+ (for PPTX extraction)
 - python-pptx library (`pip install python-pptx`)
+- ffmpeg (optional, for automatic video compression when deploying to Cloudflare Pages)
+  - macOS: `brew install ffmpeg`
+  - Ubuntu/Debian: `apt-get install ffmpeg`
+  - Windows: Download from ffmpeg.org
 
 ## Troubleshooting
 
