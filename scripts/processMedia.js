@@ -159,6 +159,34 @@ if (fs.existsSync(PRESENTATION_JSON)) {
   // Read and transform the JSON
   const presentationData = JSON.parse(fs.readFileSync(PRESENTATION_JSON, 'utf-8'));
 
+  // Load existing output to preserve AI-generated fields (description, quote_text, quote_attribution)
+  let existingData = null;
+  const existingImageData = new Map(); // Map src path -> AI fields
+  if (fs.existsSync(DATA_OUTPUT)) {
+    try {
+      existingData = JSON.parse(fs.readFileSync(DATA_OUTPUT, 'utf-8'));
+      // Build a map of existing AI-generated image data by src path
+      existingData.sections?.forEach(section => {
+        section.slides?.forEach(slide => {
+          slide.content?.forEach(item => {
+            if (item.type === 'image' && (item.description || item.quote_text)) {
+              existingImageData.set(item.src, {
+                description: item.description,
+                quote_text: item.quote_text,
+                quote_attribution: item.quote_attribution
+              });
+            }
+          });
+        });
+      });
+      if (existingImageData.size > 0) {
+        console.log(`Found ${existingImageData.size} images with AI-generated descriptions to preserve.`);
+      }
+    } catch (e) {
+      console.log('Could not read existing data, starting fresh.');
+    }
+  }
+
   // Transform media paths to use public assets
   function transformPath(srcPath) {
     if (!srcPath) return srcPath;
@@ -179,7 +207,9 @@ if (fs.existsSync(PRESENTATION_JSON)) {
 
     return content.map(item => {
       if (item.type === 'image') {
-        return { ...item, src: transformPath(item.src) };
+        const newSrc = transformPath(item.src);
+        const aiData = existingImageData.get(newSrc) || {};
+        return { ...item, src: newSrc, ...aiData };
       } else if (item.type === 'video') {
         return { ...item, src: transformPath(item.src) };
       } else if (item.type === 'smart_art') {
