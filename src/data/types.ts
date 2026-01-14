@@ -56,6 +56,7 @@ export interface ImageContent {
   src: string;
   alt: string;
   caption: string;
+  description?: string; // AI-generated description of image content
 }
 
 export interface SmartArtContent {
@@ -90,4 +91,84 @@ export interface FlatSlide extends Slide {
 export interface NavigationState {
   currentIndex: number;
   totalSlides: number;
+}
+
+// ==========================================
+// Resource Extraction Types
+// ==========================================
+
+export interface PersonResource {
+  name: string;
+  role?: string;
+  organization?: string;
+  slideIndex: number;
+  context?: string;
+}
+
+export interface OrganizationResource {
+  name: string;
+  slideIndex: number;
+  context?: string;
+}
+
+export interface PlaceResource {
+  name: string;
+  type: 'city' | 'country' | 'venue' | 'region';
+  slideIndex: number;
+  context?: string;
+}
+
+export interface DateResource {
+  raw: string;
+  formatted: string;
+  year?: number;
+  month?: string;
+  event?: string;
+  slideIndex: number;
+  context?: string;
+}
+
+export interface QuoteResource {
+  text: string;
+  attribution?: string;
+  slideIndex: number;
+  slideTitle: string;
+}
+
+export interface ImageResource {
+  src: string;
+  alt?: string;
+  caption?: string;
+  description?: string;
+  slideIndex: number;
+  slideTitle: string;
+  sectionTitle: string;
+}
+
+export interface ToolResource {
+  name: string;
+  description?: string;
+}
+
+export interface TermResource {
+  term: string;
+  context?: string;
+}
+
+export interface LinkResource {
+  url: string;
+  label: string;
+  slideIndex?: number;
+}
+
+export interface ExtractedResources {
+  people: PersonResource[];
+  organizations: OrganizationResource[];
+  places: PlaceResource[];
+  dates: DateResource[];
+  quotes: QuoteResource[];
+  images: ImageResource[];
+  tools: ToolResource[];
+  terms: TermResource[];
+  links: LinkResource[];
 }
