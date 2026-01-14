@@ -2,6 +2,8 @@
 
 Convert PowerPoint presentations into interactive React handout websites with automatic resource extraction, responsive design, and easy deployment.
 
+**📋 [View Changelog](CHANGELOG.md)** - See what's new in the latest version
+
 ## Features
 
 - **Interactive slide viewer** with keyboard navigation and progress tracking
@@ -303,6 +305,10 @@ Cloudflare Pages has a 25MB file size limit. The build process automatically com
 
 ### TypeScript errors
 The template uses strict TypeScript. Check `src/data/types.ts` for expected interfaces.
+
+## Contributing
+
+Contributions are welcome! Please see [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 
 ## License
 
