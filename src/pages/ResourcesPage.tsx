@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { extractResources } from '../utils/extractResources';
 import presentationData from '../data/presentation.json';
 import type { Presentation, ExtractedResources } from '../data/types';
@@ -6,7 +7,7 @@ import { sessionInfo } from '../data/sessionInfo';
 import ResourceCard, { type ResourceItem, type ResourceType } from '../components/resources/ResourceCard';
 import ResourceDetailModal from '../components/resources/ResourceDetailModal';
 
-type FilterType = 'all' | ResourceType;
+type FilterType = 'all' | Exclude<ResourceType, 'image'>;
 
 interface FilterTab {
   id: FilterType;
@@ -22,7 +23,6 @@ const FILTER_TABS: FilterTab[] = [
   { id: 'place', label: 'Places', icon: '📍', color: '#059669' },
   { id: 'date', label: 'Dates', icon: '📅', color: '#d97706' },
   { id: 'quote', label: 'Quotes', icon: '💬', color: '#7c3aed' },
-  { id: 'image', label: 'Images', icon: '🖼️', color: '#db2777' },
   { id: 'tool', label: 'Tools', icon: '🔧', color: '#2563eb' },
   { id: 'link', label: 'Links', icon: '🔗', color: '#0d9488' },
   { id: 'term', label: 'Terms', icon: '📖', color: '#4f46e5' },
@@ -45,7 +45,7 @@ export default function ResourcesPage() {
     resources.places.forEach(data => items.push({ type: 'place', data }));
     resources.dates.forEach(data => items.push({ type: 'date', data }));
     resources.quotes.forEach(data => items.push({ type: 'quote', data }));
-    resources.images.forEach(data => items.push({ type: 'image', data }));
+    // Images are shown in Media Gallery instead
     resources.tools.forEach(data => items.push({ type: 'tool', data }));
     resources.links.forEach(data => items.push({ type: 'link', data }));
     resources.terms.forEach(data => items.push({ type: 'term', data }));
@@ -59,17 +59,16 @@ export default function ResourcesPage() {
     return allItems.filter(item => item.type === activeFilter);
   }, [allItems, activeFilter]);
 
-  // Get counts for each category
+  // Get counts for each category (excluding images - shown in Media Gallery)
   const getCounts = (res: ExtractedResources): Record<FilterType, number> => ({
     all: res.people.length + res.organizations.length + res.places.length +
-         res.dates.length + res.quotes.length + res.images.length +
+         res.dates.length + res.quotes.length +
          res.tools.length + res.links.length + res.terms.length,
     person: res.people.length,
     organization: res.organizations.length,
     place: res.places.length,
     date: res.dates.length,
     quote: res.quotes.length,
-    image: res.images.length,
     tool: res.tools.length,
     link: res.links.length,
     term: res.terms.length,
@@ -79,98 +78,79 @@ export default function ResourcesPage() {
   const sessionType = sessionInfo.event?.type || 'presentation';
 
   return (
-    <div className="min-h-screen">
+    <div className="page-container">
       {/* Header */}
-      <section
-        style={{
-          padding: 'calc(var(--spacing-page-y) * 1.5) var(--spacing-page-x)',
-          background: 'var(--color-primary)',
-          color: 'white',
-        }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <h1 className="text-3xl font-bold mb-2" style={{ fontFamily: 'var(--font-serif)' }}>
-            Resources & Entities
-          </h1>
-          <p className="opacity-80">
-            People, organizations, dates, quotes, and more from the {sessionType.toLowerCase()}
-          </p>
+      <div className="hero">
+        <div className="flex items-center gap-4 mb-4">
+          <Link
+            to="/"
+            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Back
+          </Link>
         </div>
-      </section>
+        <h1 className="font-serif">Resources & Entities</h1>
+        <p className="mt-2 text-white/80">
+          People, organizations, dates, quotes, and more from the {sessionType.toLowerCase()}
+        </p>
+      </div>
 
-      {/* Filter Tabs */}
-      <section
-        className="sticky top-[var(--nav-height)] z-30 border-b"
-        style={{
-          backgroundColor: 'var(--color-bg)',
-          borderColor: 'var(--color-border)',
-        }}
-      >
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex gap-1 overflow-x-auto py-3 -mx-4 px-4 scrollbar-hide">
-            {FILTER_TABS.filter(tab => counts[tab.id] > 0 || tab.id === 'all').map(tab => {
-              const isActive = activeFilter === tab.id;
-              const count = counts[tab.id];
+      {/* Content */}
+      <div className="page-content">
+        {/* Filter Tabs */}
+        <div className="flex gap-2 flex-wrap">
+          {FILTER_TABS.filter(tab => counts[tab.id] > 0 || tab.id === 'all').map(tab => {
+            const isActive = activeFilter === tab.id;
+            const count = counts[tab.id];
 
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveFilter(tab.id)}
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveFilter(tab.id)}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+                  whitespace-nowrap transition-all
+                  ${isActive ? 'text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}
+                `}
+                style={{
+                  backgroundColor: isActive ? tab.color : undefined,
+                }}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+                <span
                   className={`
-                    flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium
-                    whitespace-nowrap transition-all shrink-0
-                    ${isActive ? 'text-white' : 'hover:bg-gray-100'}
+                    px-1.5 py-0.5 rounded-full text-xs
+                    ${isActive ? 'bg-white/20' : 'bg-gray-200'}
                   `}
-                  style={{
-                    backgroundColor: isActive ? tab.color : undefined,
-                    color: isActive ? 'white' : 'var(--color-text)',
-                  }}
                 >
-                  <span>{tab.icon}</span>
-                  <span>{tab.label}</span>
-                  <span
-                    className={`
-                      px-1.5 py-0.5 rounded-full text-xs
-                      ${isActive ? 'bg-white/20' : 'bg-gray-200'}
-                    `}
-                  >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
-      </section>
 
-      {/* Gallery Grid */}
-      <section style={{ padding: 'var(--spacing-page-y) var(--spacing-page-x)' }}>
-        <div className="max-w-6xl mx-auto">
-          {filteredItems.length === 0 ? (
-            <div className="text-center py-12 opacity-60">
-              <p className="text-lg">No items found in this category</p>
-            </div>
-          ) : (
-            <div
-              className={`
-                grid gap-4
-                ${activeFilter === 'image'
-                  ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-                  : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
-                }
-              `}
-            >
-              {filteredItems.map((item, index) => (
-                <ResourceCard
-                  key={`${item.type}-${index}`}
-                  item={item}
-                  onClick={() => setSelectedItem(item)}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+        {/* Gallery Grid */}
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-12 text-gray-500">
+            No items found in this category
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {filteredItems.map((item, index) => (
+              <ResourceCard
+                key={`${item.type}-${index}`}
+                item={item}
+                onClick={() => setSelectedItem(item)}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Detail Modal */}
       <ResourceDetailModal

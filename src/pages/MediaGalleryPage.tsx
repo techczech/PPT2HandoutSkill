@@ -146,11 +146,11 @@ export default function MediaGalleryPage() {
                 <img
                   src={item.src}
                   alt={item.alt || item.slideTitle}
-                  className="w-full h-40 object-cover"
+                  className="w-full aspect-video object-cover"
                   loading="lazy"
                 />
               ) : (
-                <div className="w-full h-40 flex items-center justify-center bg-gray-800">
+                <div className="w-full aspect-video flex items-center justify-center bg-gray-800">
                   <svg
                     className="w-12 h-12 text-white/60"
                     fill="none"

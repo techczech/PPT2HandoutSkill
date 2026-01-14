@@ -115,8 +115,14 @@ const ROLE_PATTERNS = [
 // Regex Patterns
 // ==========================================
 
-const URL_PATTERN = /(?:https?:\/\/)?(?:www\.)?([a-zA-Z0-9-]+(?:\.[a-zA-Z]{2,})+)(?:\/[^\s)]*)?/gi;
-const SHORTLINK_PATTERN = /(?:bit\.ly|linktr\.ee|tinyurl\.com)\/[a-zA-Z0-9-]+/gi;
+// URL pattern - strict to avoid false positives like "dominik.lukes"
+// Only match: explicit http(s)://, www. prefix, or common TLDs
+const COMMON_TLDS = 'com|org|net|io|edu|gov|co|uk|de|fr|it|es|nl|be|ch|at|ai|dev|app|tech|info|biz';
+const URL_PATTERN = new RegExp(
+  `(?:https?:\\/\\/[^\\s)]+|www\\.[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}(?:\\/[^\\s)]*)?|[a-zA-Z0-9-]+\\.(?:${COMMON_TLDS})(?:\\/[^\\s)]*)?)`,
+  'gi'
+);
+const SHORTLINK_PATTERN = /(?:bit\.ly|linktr\.ee|tinyurl\.com|t\.co|goo\.gl|youtu\.be)\/[a-zA-Z0-9-_]+/gi;
 
 // Date patterns
 const MONTH_YEAR_PATTERN = /\b(Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+(\d{4})\b/gi;
