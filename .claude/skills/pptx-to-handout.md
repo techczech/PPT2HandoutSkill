@@ -92,9 +92,18 @@ Read through `src/data/presentation.json` (or `sourcematerials/presentation.json
   - Source if identifiable
 - If image contains a quote, reference it (don't duplicate the text)
 - Assign a **category** to each image from:
-  - `cartoon`, `interface_screenshot`, `chat_screenshot`, `tweet`, `quote`
-  - `academic_paper`, `diagram`, `chart`, `photo_person`, `book_cover`
-  - `product_page`, `other`
+  - `cartoon` - Illustrations, drawings, comics, memes with drawn characters
+  - `interface_screenshot` - Software UI, app interfaces, website screenshots
+  - `chat_screenshot` - Slack, Teams, Discord, or other chat app messages
+  - `tweet` - Twitter/X posts
+  - `quote` - Text-based quotes or blockquotes
+  - `academic_paper` - Research paper pages, citations, abstracts
+  - `diagram` - Technical diagrams, flowcharts, architecture diagrams
+  - `chart` - Data visualizations, graphs, bar charts, line charts
+  - `photo_person` - Photographs of people
+  - `book_cover` - Book covers, ebook covers
+  - `product_page` - E-commerce or product listing pages
+  - `other` - Anything that doesn't fit above categories
 
 #### Organizations
 - Identify companies, institutions, research groups mentioned
