@@ -13,17 +13,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - No API calls required - runs entirely locally
   - Useful when descriptions exist but categories are missing
   - Pattern-based detection for 12 categories
+- **categorize-presentation-images.py** - Alternative local categorization script
+  - Categorizes images based on existing descriptions
+  - Keyword matching for all 12 image categories
+  - No API costs - pure local processing
+  - Useful fallback when API analysis is unavailable
+- **HomePage Index & Glossary Preview** - New section showing resource examples
+  - Displays sample people, quotes, tools, terms, and dates
+  - Links to full Resources page
+  - Improves discoverability of extracted entities
 
 ### Changed
-- **MediaGalleryPage.tsx** filter improvements
+- **analyze-existing-images.py** - Updated to use Gemini 3 Flash Preview
+  - Switched from deprecated `google.generativeai` to `google-genai` package
+  - Uses `gemini-3-flash-preview` model (NOT gemini-2.0)
+  - Updated API calls to match new package structure
+  - Improved error handling and token tracking
+- **processMedia.js** - Now preserves AI-generated category field
+  - Added `category` to preserved image fields during build
+  - Prevents category data loss during media processing
+  - Categories now persist from analysis through to deployment
+- **MediaGalleryPage.tsx** improvements
+  - Reads descriptions and categories directly from presentation.json
+  - Removed unnecessary entities.json lookup for image metadata
+  - Fixed TypeScript errors with unused imports
   - Removed "Key Images" section
   - Added "With Description" filter button
   - Changed large key badge to small ✨ icon for images with descriptions
   - Category badge now shown separately alongside description icon
-- **Skill documentation** updated
+- **HomePage.tsx** - Redesigned for better content hierarchy
+  - Abstract now prominent at top with accent-colored border
+  - Key topics displayed in larger, more visible card
+  - New Index & Glossary Preview section replaces Resources section
+  - Shows examples from extracted entities with "View Full Index" link
+  - Session details moved to bottom for cleaner layout
+- **Skill documentation** extensively updated
+  - **User Interaction Philosophy** section added
+    - "ASK, don't assume" - confirm before significant decisions
+    - "Show, then ask" - present results before proceeding
+    - "Never deploy without explicit user approval"
+    - Regular check-ins after major steps
+  - **Critical URL Extraction Guidance** added
+    - Warning about URLs split across lines in presentations
+    - Semantic understanding required (not regex-based extraction)
+    - URL validation requirements before adding to entities
+    - Examples of common URL splitting issues
+  - **Gemini 3 Flash Preview Requirements** emphasized
+    - MUST use `gemini-3-flash-preview` model
+    - Use `google-genai` package (not `google.generativeai`)
+    - Never use Gemini 2.0 models for this task
   - Added documentation for both image analysis scripts
   - Updated entities.json format with category field
   - Added processingStats.json to file structure
+
+### Fixed
+- **Image categories not visible** - MediaGalleryPage now correctly reads from presentation.json
+- **URL splitting issues** - Skill now emphasizes semantic extraction over regex
+  - Prevents false URLs like "ac.uk" from "user@example.ac.uk"
+  - Prevents domain splits like "ltvibes.tech" + "czech.net" from "ltvibes.techczech.net"
+- **Wrong Gemini model usage** - Documentation now clearly requires Gemini 3 Flash Preview
 
 ## [1.3.0] - 2026-01-15
 
