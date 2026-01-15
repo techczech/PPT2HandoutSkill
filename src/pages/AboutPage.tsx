@@ -23,6 +23,36 @@ const presentation = presentationData as Presentation;
 const SKILL_REPO_URL = 'https://github.com/techczech/PPT2HandoutSkill';
 
 export default function AboutPage() {
+  // Count images with AI-generated descriptions
+  const imagesWithDescriptions = presentation.sections.reduce((count, section) => {
+    return count + section.slides.reduce((slideCount, slide) => {
+      return slideCount + slide.content.filter(
+        block => block.type === 'image' && (block as any).description
+      ).length;
+    }, 0);
+  }, 0);
+
+  // Count images with categories
+  const imagesWithCategories = presentation.sections.reduce((count, section) => {
+    return count + section.slides.reduce((slideCount, slide) => {
+      return slideCount + slide.content.filter(
+        block => block.type === 'image' && (block as any).category
+      ).length;
+    }, 0);
+  }, 0);
+
+  // Get unique categories
+  const allCategories = new Set<string>();
+  presentation.sections.forEach(section => {
+    section.slides.forEach(slide => {
+      slide.content.forEach(block => {
+        if (block.type === 'image' && (block as any).category) {
+          allCategories.add((block as any).category);
+        }
+      });
+    });
+  });
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6" style={{ color: 'var(--color-primary)' }}>
@@ -144,50 +174,56 @@ export default function AboutPage() {
           </p>
         </section>
 
-        {/* AI Processing Stats (if available) */}
-        {processingStats && processingStats.imagesProcessed && (
+        {/* AI Processing Stats */}
+        {imagesWithDescriptions > 0 && (
           <section className="card p-6">
             <h2 className="text-xl font-semibold mb-3">AI Image Analysis</h2>
             <p className="text-gray-700 mb-4">
-              Images in this presentation were analyzed using {processingStats.model || 'Gemini AI'}
-              {processingStats.processedAt && (
+              Images in this presentation were analyzed using{' '}
+              {processingStats?.model || 'Gemini 3 Flash Preview'}
+              {processingStats?.processedAt && (
                 <> on {new Date(processingStats.processedAt).toLocaleDateString()}</>
-              )}.
+              )}
+              {' '}to generate descriptions and categorize content.
             </p>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="text-2xl font-bold text-primary">{processingStats.imagesProcessed}</div>
-                <div className="text-gray-600">Images analyzed</div>
+                <div className="text-2xl font-bold text-primary">{imagesWithDescriptions}</div>
+                <div className="text-gray-600">Images with descriptions</div>
               </div>
-              {processingStats.tokensUsed && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
-                    {(processingStats.tokensUsed.total / 1000).toFixed(1)}K
-                  </div>
-                  <div className="text-gray-600">Tokens used</div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-2xl font-bold text-primary">{imagesWithCategories}</div>
+                <div className="text-gray-600">Images categorized</div>
+              </div>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="text-2xl font-bold text-primary">
+                  {allCategories.size}
                 </div>
-              )}
-              {processingStats.categoryCounts && (
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <div className="text-2xl font-bold text-primary">
-                    {Object.keys(processingStats.categoryCounts).length}
-                  </div>
-                  <div className="text-gray-600">Categories detected</div>
-                </div>
-              )}
+                <div className="text-gray-600">Categories used</div>
+              </div>
             </div>
-            {processingStats.categoryCounts && Object.keys(processingStats.categoryCounts).length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
-                {Object.entries(processingStats.categoryCounts)
-                  .sort((a, b) => b[1] - a[1])
-                  .map(([category, count]) => (
-                    <span
-                      key={category}
-                      className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
-                    >
-                      {category}: {count}
-                    </span>
-                  ))}
+            {allCategories.size > 0 && (
+              <div className="mt-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Categories detected:</p>
+                <div className="flex flex-wrap gap-2">
+                  {Array.from(allCategories).sort().map((category) => {
+                    const count = presentation.sections.reduce((total, section) => {
+                      return total + section.slides.reduce((slideTotal, slide) => {
+                        return slideTotal + slide.content.filter(
+                          block => block.type === 'image' && (block as any).category === category
+                        ).length;
+                      }, 0);
+                    }, 0);
+                    return (
+                      <span
+                        key={category}
+                        className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs"
+                      >
+                        {category}: {count}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </section>
