@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Displays sample people, quotes, tools, terms, and dates
   - Links to full Resources page
   - Improves discoverability of extracted entities
+- **Keyboard shortcut 'A' for About page** - Navigate to About page from anywhere
+  - Press 'A' key to jump to About page
+  - Added to keyboard shortcuts modal documentation
+  - Consistent with other navigation shortcuts (h, s, i, m)
+- **GitHub replication link on About page** - Makes skill discoverable
+  - Prominent "Replicate This Process" section with GitHub button
+  - Links to https://github.com/techczech/PPT2HandoutSkill
+  - Encourages open source replication
+  - Shows actual presentation stats (slides, images)
 
 ### Changed
 - **analyze-existing-images.py** - Updated to use Gemini 3 Flash Preview
@@ -47,6 +56,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - New Index & Glossary Preview section replaces Resources section
   - Shows examples from extracted entities with "View Full Index" link
   - Session details moved to bottom for cleaner layout
+- **AboutPage.tsx** - Enhanced with replication info and accurate stats
+  - Shows actual image counts from presentation data (not incremental stats)
+  - Displays tokens used from processingStats.json
+  - Counts images with descriptions/categories dynamically
+  - Shows unique categories with individual counts
+  - Links directly to PPT2HandoutSkill GitHub repo
+  - "Replicate This Process" section encourages open source adoption
 - **Skill documentation** extensively updated
   - **User Interaction Philosophy** section added
     - "ASK, don't assume" - confirm before significant decisions

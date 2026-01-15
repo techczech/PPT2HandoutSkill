@@ -56,9 +56,9 @@ export default function SiteHeader({ onOpenSearch, onOpenHelp }: SiteHeaderProps
           <Link
             to="/about"
             className={isActive('/about') ? 'active' : ''}
-            title="About"
+            title="About (a)"
           >
-            About
+            <u>A</u>bout
           </Link>
 
           {/* Divider */}
