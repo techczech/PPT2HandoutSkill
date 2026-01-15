@@ -186,7 +186,7 @@ export default function AboutPage() {
               )}
               {' '}to generate descriptions and categorize content.
             </p>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div className="bg-gray-50 p-3 rounded-lg">
                 <div className="text-2xl font-bold text-primary">{imagesWithDescriptions}</div>
                 <div className="text-gray-600">Images with descriptions</div>
@@ -201,6 +201,14 @@ export default function AboutPage() {
                 </div>
                 <div className="text-gray-600">Categories used</div>
               </div>
+              {processingStats?.tokensUsed && (
+                <div className="bg-gray-50 p-3 rounded-lg">
+                  <div className="text-2xl font-bold text-primary">
+                    {(processingStats.tokensUsed.total / 1000).toFixed(1)}K
+                  </div>
+                  <div className="text-gray-600">Tokens used</div>
+                </div>
+              )}
             </div>
             {allCategories.size > 0 && (
               <div className="mt-4">

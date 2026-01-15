@@ -11,6 +11,7 @@ const shortcuts = [
     { keys: ['s'], description: 'Go to Slides' },
     { keys: ['i'], description: 'Go to Index' },
     { keys: ['m'], description: 'Go to Media Gallery' },
+    { keys: ['a'], description: 'Go to About' },
   ]},
   { category: 'Slide Navigation (on Slides page)', items: [
     { keys: ['←', '→'], description: 'Previous / Next slide' },

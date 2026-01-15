@@ -94,6 +94,15 @@ export function useGlobalKeyboard(): GlobalKeyboardState {
             navigate('/resources');
           }
           break;
+
+        // About: a
+        case 'a':
+        case 'A':
+          if (!event.ctrlKey && !event.metaKey) {
+            event.preventDefault();
+            navigate('/about');
+          }
+          break;
       }
     }
 
