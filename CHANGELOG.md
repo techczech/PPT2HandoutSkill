@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-01-15
+
+### Added
+- **Image categorization** - AI now classifies images into categories during analysis
+  - Categories: cartoon, interface_screenshot, chat_screenshot, tweet, quote, academic_paper, diagram, chart, photo_person, book_cover, product_page, other
+  - Category filter dropdown in Media Gallery page
+  - Category badge displayed on each image in gallery
+- **Processing statistics** - Track and display AI analysis metrics
+  - New `processingStats.json` file generated after image analysis
+  - Tracks: images processed, tokens used, category counts, processing duration
+  - About page now displays AI processing stats when available
+- **Token usage tracking** in analyze-existing-images.py script
+  - Reports input/output/total tokens used during analysis
+  - Displayed in terminal output and saved to stats file
+
+### Changed
+- **analyze-existing-images.py** significantly updated
+  - Added image category classification to prompt
+  - Added token tracking via response.usage_metadata
+  - Generates `processingStats.json` with detailed metrics
+  - Upgraded from Gemini 3 Flash Preview to Gemini 2.0 Flash
+  - Category breakdown shown in terminal output
+- **MediaGalleryPage.tsx** enhanced
+  - Added category filter dropdown (only shows when categories exist)
+  - Category badge on image cards replacing generic "Key" badge
+  - Updated filtering logic to support combined type + category filtering
+- **AboutPage.tsx** enhanced
+  - New "AI Image Analysis" section (conditional on stats file existing)
+  - Shows images analyzed, tokens used, categories detected
+  - Category breakdown with counts
+
+### Documentation
+- Updated skill to document new image categorization feature
+- Added processingStats.json to file structure documentation
+
 ## [1.2.0] - 2026-01-14
 
 ### Added
@@ -114,7 +149,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Customizable colors and fonts
 - TypeScript support with strict type checking
 
-[Unreleased]: https://github.com/techczech/PPT2HandoutSkill/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/techczech/PPT2HandoutSkill/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/techczech/PPT2HandoutSkill/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/techczech/PPT2HandoutSkill/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/techczech/PPT2HandoutSkill/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/techczech/PPT2HandoutSkill/releases/tag/v1.0.0

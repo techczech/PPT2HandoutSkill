@@ -4,12 +4,32 @@ import type { Presentation, Section, Slide, ContentBlock, ImageContent, VideoCon
 import presentationData from '../data/presentation.json';
 import entitiesData from '../data/entities.json';
 
+// Valid image categories
+const IMAGE_CATEGORIES = [
+  { value: 'all', label: 'All Categories' },
+  { value: 'interface_screenshot', label: 'Screenshots' },
+  { value: 'tweet', label: 'Tweets' },
+  { value: 'chat_screenshot', label: 'Chat' },
+  { value: 'chart', label: 'Charts' },
+  { value: 'diagram', label: 'Diagrams' },
+  { value: 'photo_person', label: 'Photos' },
+  { value: 'book_cover', label: 'Book Covers' },
+  { value: 'product_page', label: 'Product Pages' },
+  { value: 'academic_paper', label: 'Academic' },
+  { value: 'quote', label: 'Quotes' },
+  { value: 'cartoon', label: 'Cartoons' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+type CategoryFilter = typeof IMAGE_CATEGORIES[number]['value'];
+
 interface MediaItem {
   type: 'image' | 'video';
   src: string;
   alt?: string;
   caption?: string;
   description?: string;  // AI-generated description from entities.json
+  category?: string;     // AI-generated category from entities.json
   title?: string;
   slideIndex: number;
   slideTitle: string;
@@ -22,6 +42,7 @@ interface EntityImage {
   description: string;
   slideIndex: number;
   containsQuote?: boolean;
+  category?: string;
 }
 
 const entityImages = (entitiesData.images || []) as EntityImage[];
@@ -39,6 +60,7 @@ function extractMedia(content: ContentBlock): (ImageContent | VideoContent)[] {
 export default function MediaGalleryPage() {
   const presentation = presentationData as Presentation;
   const [filter, setFilter] = useState<'all' | 'images' | 'videos' | 'key'>('all');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
   // Extract all media from the presentation
@@ -60,6 +82,7 @@ export default function MediaGalleryPage() {
                 alt: media.alt,
                 caption: media.caption,
                 description: entityImage?.description,
+                category: entityImage?.category,
                 slideIndex: globalIndex,
                 slideTitle: slide.title || 'Untitled slide',
                 sectionTitle: section.title,
@@ -84,15 +107,35 @@ export default function MediaGalleryPage() {
   }, [presentation]);
 
   const filteredMedia = useMemo(() => {
-    if (filter === 'all') return allMedia;
-    if (filter === 'images') return allMedia.filter(m => m.type === 'image');
-    if (filter === 'key') return allMedia.filter(m => m.type === 'image' && m.description);
-    return allMedia.filter(m => m.type === 'video');
-  }, [allMedia, filter]);
+    let result = allMedia;
+
+    // Apply type filter
+    if (filter === 'images') result = result.filter(m => m.type === 'image');
+    else if (filter === 'videos') result = result.filter(m => m.type === 'video');
+    else if (filter === 'key') result = result.filter(m => m.type === 'image' && m.description);
+
+    // Apply category filter (only for images)
+    if (categoryFilter !== 'all' && filter !== 'videos') {
+      result = result.filter(m => m.type === 'video' || m.category === categoryFilter);
+    }
+
+    return result;
+  }, [allMedia, filter, categoryFilter]);
 
   const imageCount = allMedia.filter(m => m.type === 'image').length;
   const videoCount = allMedia.filter(m => m.type === 'video').length;
   const keyCount = allMedia.filter(m => m.type === 'image' && m.description).length;
+
+  // Calculate category counts for images with descriptions
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    allMedia.forEach(m => {
+      if (m.type === 'image' && m.category) {
+        counts[m.category] = (counts[m.category] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [allMedia]);
 
   return (
     <div className="page-container">
@@ -118,7 +161,7 @@ export default function MediaGalleryPage() {
       {/* Content */}
       <div className="page-content">
         {/* Filter buttons */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="flex gap-2 flex-wrap items-center">
           <button
             onClick={() => setFilter('all')}
             className={`px-4 py-2 rounded-lg transition-colors ${
@@ -161,6 +204,29 @@ export default function MediaGalleryPage() {
           >
             Videos ({videoCount})
           </button>
+
+          {/* Category filter dropdown */}
+          {filter !== 'videos' && Object.keys(categoryCounts).length > 0 && (
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value as CategoryFilter)}
+              className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {IMAGE_CATEGORIES.map(cat => {
+                const count = cat.value === 'all'
+                  ? Object.values(categoryCounts).reduce((a, b) => a + b, 0)
+                  : categoryCounts[cat.value] || 0;
+                if (cat.value === 'all' || count > 0) {
+                  return (
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label} {count > 0 ? `(${count})` : ''}
+                    </option>
+                  );
+                }
+                return null;
+              })}
+            </select>
+          )}
         </div>
 
         {/* Media grid */}
@@ -211,8 +277,13 @@ export default function MediaGalleryPage() {
                   Slide {item.slideIndex + 1} · {item.sectionTitle}
                 </p>
               </div>
-              {/* Badge for images with AI descriptions */}
-              {item.description && (
+              {/* Badge for category or key images */}
+              {item.category && (
+                <div className="absolute top-2 right-2 bg-blue-600/90 text-white text-xs px-2 py-1 rounded-full">
+                  {IMAGE_CATEGORIES.find(c => c.value === item.category)?.label || item.category}
+                </div>
+              )}
+              {!item.category && item.description && (
                 <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
                   ✨ Key
                 </div>
