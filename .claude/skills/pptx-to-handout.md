@@ -17,7 +17,14 @@ This skill creates a professional, responsive handout website from a PowerPoint 
 /pptx-to-handout [path-to-pptx-or-json-folder]
 ```
 
-## Workflow
+## Workflow Principles
+
+**User Interaction Philosophy:**
+- **ASK, don't assume** - Always confirm before making significant decisions
+- **Show, then ask** - After completing extraction or generation steps, show the user a summary and ask for confirmation before proceeding
+- **Validate critical data** - URLs, names, titles should be confirmed with user if there's any ambiguity
+- **Regular check-ins** - After each major step (extraction, entity generation, build), ask user if they want to review or proceed
+- **Never deploy without explicit user approval** - Always ask before deploying to production
 
 ### Step 1: Gather Key Information Upfront
 
@@ -66,6 +73,8 @@ This allows quick adjustments before final generation.
 ### Step 4: Analyze Content for Entities
 
 **IMPORTANT:** This step replaces mechanical regex-based extraction with AI model understanding.
+
+**User Interaction:** After completing entity extraction, show the user a summary of what was found (counts of people, quotes, tools, etc.) and ask if they'd like to review any category before proceeding.
 
 Read through `src/data/presentation.json` (or `sourcematerials/presentation.json` if not yet processed) and create `src/data/entities.json` with semantically extracted entities:
 
@@ -117,6 +126,20 @@ Read through `src/data/presentation.json` (or `sourcematerials/presentation.json
 - Identify AI tools, products, services mentioned
 - Include brief context of why mentioned
 
+**CRITICAL - URL Extraction:**
+- **DO NOT blindly extract text that looks like URLs**
+- Many URLs split across lines in presentations (e.g., "ltvibes.tech" on one line, "czech.net" on the next)
+- **ALWAYS consider full context** - read surrounding text to reconstruct the complete URL
+- **VALIDATE each URL** before adding:
+  1. Check if the URL makes semantic sense (techczech.net makes sense, czech.net alone doesn't)
+  2. Verify the URL format is complete (has protocol or full domain)
+  3. If uncertain, ask the user to confirm the URL
+- Common patterns:
+  - Website shown on slide with line breaks: "https://example.com/path" might appear as "example.com/" then "path"
+  - Email addresses: "user@domain." then "com" on next line
+- Extract the INTENDED URL, not the visually split version
+- If you can't determine the complete URL, mark it for user review
+
 #### Terms
 - Identify key technical terms used
 - Include brief definitions
@@ -165,15 +188,20 @@ The Resources page will read from this file instead of using regex patterns.
 For presentations with many images, two scripts are available:
 
 **1. analyze-existing-images.py** - Use Gemini AI to generate descriptions and categories
+
+**CRITICAL:** This script MUST use **Gemini 3 Flash Preview** (`gemini-3-flash-preview`) model. DO NOT use Gemini 2.0 models.
+
 ```bash
-pip install google-generativeai pillow
+pip install google-genai pillow  # NOTE: google-genai, NOT google-generativeai
 export GEMINI_API_KEY="your-key"
 python scripts/analyze-existing-images.py /path/to/site
 ```
-- Analyzes images using vision AI
+- Analyzes images using Gemini 3 Flash Preview vision AI
 - Generates descriptions with context (e.g., "Tweet by X on Y date")
-- Assigns categories to each image
+- Assigns categories to each image from the predefined list
+- Extracts quotes from tweets, screenshots, and text images
 - Tracks token usage and creates `processingStats.json`
+- Updates `presentation.json` with image metadata in-place
 
 **2. categorize-from-descriptions.py** - Categorize without API calls
 ```bash
