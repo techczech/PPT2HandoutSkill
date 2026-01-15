@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **categorize-from-descriptions.py** - New script for local image categorization
+  - Uses keyword matching on existing descriptions
+  - No API calls required - runs entirely locally
+  - Useful when descriptions exist but categories are missing
+  - Pattern-based detection for 12 categories
+
+### Changed
+- **MediaGalleryPage.tsx** filter improvements
+  - Removed "Key Images" section
+  - Added "With Description" filter button
+  - Changed large key badge to small ✨ icon for images with descriptions
+  - Category badge now shown separately alongside description icon
+- **Skill documentation** updated
+  - Added documentation for both image analysis scripts
+  - Updated entities.json format with category field
+  - Added processingStats.json to file structure
+
 ## [1.3.0] - 2026-01-15
 
 ### Added

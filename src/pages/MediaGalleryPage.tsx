@@ -59,7 +59,7 @@ function extractMedia(content: ContentBlock): (ImageContent | VideoContent)[] {
 
 export default function MediaGalleryPage() {
   const presentation = presentationData as Presentation;
-  const [filter, setFilter] = useState<'all' | 'images' | 'videos' | 'key'>('all');
+  const [filter, setFilter] = useState<'all' | 'images' | 'videos' | 'described'>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 
@@ -112,7 +112,7 @@ export default function MediaGalleryPage() {
     // Apply type filter
     if (filter === 'images') result = result.filter(m => m.type === 'image');
     else if (filter === 'videos') result = result.filter(m => m.type === 'video');
-    else if (filter === 'key') result = result.filter(m => m.type === 'image' && m.description);
+    else if (filter === 'described') result = result.filter(m => m.type === 'image' && m.description);
 
     // Apply category filter (only for images)
     if (categoryFilter !== 'all' && filter !== 'videos') {
@@ -124,7 +124,7 @@ export default function MediaGalleryPage() {
 
   const imageCount = allMedia.filter(m => m.type === 'image').length;
   const videoCount = allMedia.filter(m => m.type === 'video').length;
-  const keyCount = allMedia.filter(m => m.type === 'image' && m.description).length;
+  const describedCount = allMedia.filter(m => m.type === 'image' && m.description).length;
 
   // Calculate category counts for images with descriptions
   const categoryCounts = useMemo(() => {
@@ -172,16 +172,16 @@ export default function MediaGalleryPage() {
           >
             All ({allMedia.length})
           </button>
-          {keyCount > 0 && (
+          {describedCount > 0 && (
             <button
-              onClick={() => setFilter('key')}
+              onClick={() => setFilter('described')}
               className={`px-4 py-2 rounded-lg transition-colors ${
-                filter === 'key'
+                filter === 'described'
                   ? 'bg-blue-600 text-white'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              ✨ Key Images ({keyCount})
+              With Description ({describedCount})
             </button>
           )}
           <button
@@ -277,17 +277,21 @@ export default function MediaGalleryPage() {
                   Slide {item.slideIndex + 1} · {item.sectionTitle}
                 </p>
               </div>
-              {/* Badge for category or key images */}
-              {item.category && (
-                <div className="absolute top-2 right-2 bg-blue-600/90 text-white text-xs px-2 py-1 rounded-full">
-                  {IMAGE_CATEGORIES.find(c => c.value === item.category)?.label || item.category}
-                </div>
-              )}
-              {!item.category && item.description && (
-                <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full">
-                  ✨ Key
-                </div>
-              )}
+              {/* Badges */}
+              <div className="absolute top-2 right-2 flex gap-1">
+                {/* Small icon for images with AI description */}
+                {item.description && (
+                  <div className="bg-blue-600/90 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full" title="Has AI description">
+                    ✨
+                  </div>
+                )}
+                {/* Category badge */}
+                {item.category && (
+                  <div className="bg-gray-800/80 text-white text-xs px-2 py-1 rounded-full">
+                    {IMAGE_CATEGORIES.find(c => c.value === item.category)?.label || item.category}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
