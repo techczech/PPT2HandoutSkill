@@ -169,9 +169,10 @@ if (fs.existsSync(PRESENTATION_JSON)) {
       existingData.sections?.forEach(section => {
         section.slides?.forEach(slide => {
           slide.content?.forEach(item => {
-            if (item.type === 'image' && (item.description || item.quote_text)) {
+            if (item.type === 'image' && (item.description || item.quote_text || item.category)) {
               existingImageData.set(item.src, {
                 description: item.description,
+                category: item.category,
                 quote_text: item.quote_text,
                 quote_attribution: item.quote_attribution
               });

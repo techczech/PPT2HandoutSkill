@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Analyze existing images in presentation.json and add descriptions.
-Uses Gemini 3 Flash Preview for image analysis.
+Uses Gemini 3 Flash Preview via the new google.genai package.
+IMPORTANT: Always use gemini-3-flash-preview model, NOT gemini-2.0-flash-exp.
 """
 
 import sys
@@ -11,11 +12,12 @@ from pathlib import Path
 from datetime import datetime
 
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     from PIL import Image
 except ImportError:
     print("Error: Required packages not installed.")
-    print("Install with: pip install google-generativeai Pillow")
+    print("Install with: pip install google-genai Pillow")
     sys.exit(1)
 
 # Initialize Gemini
@@ -24,8 +26,7 @@ if not api_key:
     print("Error: GEMINI_API_KEY or GOOGLE_API_KEY environment variable required.")
     sys.exit(1)
 
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.0-flash')
+client = genai.Client(api_key=api_key)
 
 # Valid image categories
 VALID_CATEGORIES = [
@@ -53,9 +54,10 @@ def analyze_image(image_path, slide_title=None):
     global total_input_tokens, total_output_tokens
 
     try:
+        # Read image with PIL
         image = Image.open(image_path)
-        context = f" from slide '{slide_title}'" if slide_title else ""
 
+        context = f" from slide '{slide_title}'" if slide_title else ""
         categories_list = ", ".join(VALID_CATEGORIES)
 
         prompt = f"""Analyze this presentation slide image{context}. Respond in JSON format:
@@ -90,7 +92,11 @@ Focus on:
 
 Return ONLY valid JSON, no other text."""
 
-        response = model.generate_content([prompt, image])
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview',
+            contents=[prompt, image]
+        )
+
         response_text = response.text.strip()
 
         # Track token usage if available
@@ -124,8 +130,8 @@ def main():
     global total_input_tokens, total_output_tokens
 
     if len(sys.argv) < 2:
-        print("Usage: python analyze-existing-images.py <site_directory>")
-        print("Example: python analyze-existing-images.py /path/to/threeyearsafterchatgpt")
+        print("Usage: python analyze-existing-images-new.py <site_directory>")
+        print("Example: python analyze-existing-images-new.py /path/to/cogrevteach")
         sys.exit(1)
 
     site_dir = Path(sys.argv[1])
@@ -150,7 +156,7 @@ def main():
     public_dir = site_dir / "public"
     print(f"Site directory: {site_dir}")
     print(f"Public directory: {public_dir}")
-    print(f"Using Gemini 2.0 Flash")
+    print(f"Using Gemini 3 Flash Preview (new API)")
     print()
 
     # Process all sections and slides
@@ -182,13 +188,14 @@ def main():
                         print(f"  Warning: Image not found: {image_path}")
                         continue
 
-                    # Skip if already analyzed
-                    if content.get('description'):
+                    # Skip if already analyzed (has both description AND category)
+                    if content.get('description') and content.get('category'):
                         print(f"  Skipping (already analyzed): {src}")
                         images_skipped += 1
                         continue
 
                     print(f"  Analyzing: {src} (Slide: {slide_title[:40]}...)")
+                    sys.stdout.flush()
 
                     result = analyze_image(image_path, slide_title)
 
@@ -207,6 +214,8 @@ def main():
                         elif result.get('description'):
                             print(f"    -> [{content['category']}] {result['description'][:60]}...")
 
+                        sys.stdout.flush()
+
                     images_processed += 1
 
     end_time = datetime.now()
@@ -219,7 +228,7 @@ def main():
     # Generate processing stats
     stats = {
         "processedAt": end_time.isoformat(),
-        "model": "gemini-2.0-flash",
+        "model": "gemini-3-flash-preview",
         "imagesProcessed": images_processed,
         "imagesSkipped": images_skipped,
         "quotesExtracted": quotes_found,
