@@ -81,13 +81,27 @@ This repo includes a `/pptx-to-handout` skill (`.claude/skills/pptx-to-handout/S
 
 ## Image Analysis Scripts
 
-For AI-powered image description:
+For AI-powered image description, the script supports multiple backends:
+
 ```bash
-pip install google-genai pillow
-export GEMINI_API_KEY="..."
+# List available backends and models
+python scripts/analyze-existing-images.py --list
+
+# Auto-detect best available backend (LM Studio > Ollama > Gemini)
 python scripts/analyze-existing-images.py /path/to/site
+
+# Use specific backend
+python scripts/analyze-existing-images.py /path/to/site --backend lmstudio --model "llava-v1.6"
+python scripts/analyze-existing-images.py /path/to/site --backend ollama --model "llava:13b"
+python scripts/analyze-existing-images.py /path/to/site --backend gemini
 ```
-Uses Gemini 3 Flash Preview to generate descriptions, categories, and extract quotes from images.
+
+**Backends (in priority order):**
+- **LM Studio** - Local server at localhost:1234 (OpenAI-compatible API)
+- **Ollama** - Local server at localhost:11434 (auto-filters for vision models)
+- **Gemini** - Cloud API (requires `GEMINI_API_KEY` or `GOOGLE_API_KEY`)
+
+For Gemini, install: `pip install google-genai pillow`
 
 ## Content Types
 

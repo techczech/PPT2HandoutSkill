@@ -116,6 +116,50 @@ Entity types to extract:
 - VALIDATE each URL makes semantic sense
 - If uncertain, ask the user to confirm
 
+### Step 5b: AI Image Categorization (Optional)
+
+If the presentation has images, ask the user if they want to run AI-powered image analysis to generate descriptions and categories.
+
+**First, detect available backends:**
+```bash
+python scripts/analyze-existing-images.py --list --json
+```
+
+This returns available backends and models:
+- **lmstudio** - Local LM Studio server (localhost:1234) with vision models
+- **ollama** - Local Ollama server (localhost:11434) with vision models (llava, etc.)
+- **gemini** - Cloud Gemini API (requires GEMINI_API_KEY)
+
+**Use `AskUserQuestion` to ask:**
+
+1. **Run image categorization?** - Yes / No / Skip (can do later)
+2. **If yes, which backend?** - Show only available backends from --list output
+3. **Which model?** - Show models available for the selected backend
+
+**Example question flow:**
+- "The presentation has 45 images. Would you like to run AI image categorization?"
+- If yes: "Available backends: LM Studio (llava-v1.6-mistral), Ollama (llava:13b). Which would you like to use?"
+- Then: "Which model? [list models for selected backend]"
+
+**Run the analysis:**
+```bash
+# With auto-detection (uses LM Studio > Ollama > Gemini priority)
+python scripts/analyze-existing-images.py .
+
+# Or with specific backend/model
+python scripts/analyze-existing-images.py . --backend lmstudio --model "llava-v1.6-mistral"
+python scripts/analyze-existing-images.py . --backend ollama --model "llava:13b"
+python scripts/analyze-existing-images.py . --backend gemini
+```
+
+The script updates `src/data/presentation.json` with image descriptions, categories, and extracted quotes.
+
+**If user skips:** Let them know they can run it later with:
+```bash
+python scripts/analyze-existing-images.py . --list  # See available backends
+python scripts/analyze-existing-images.py .         # Run with auto-detection
+```
+
 ### Step 6: Generate sessionInfo.ts
 
 Create `src/data/sessionInfo.ts` using:
