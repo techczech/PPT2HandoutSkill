@@ -17,82 +17,152 @@ Convert PowerPoint presentations into interactive React handout websites.
 ## Usage
 
 ```
-/pptx-to-handout [path-to-pptx-or-json-folder]
+/pptx-to-handout <path-to-pptx-or-sourcematerials-folder>
 ```
 
-## Workflow Principles
+## Core Principles
 
-- **ASK, don't assume** - Confirm before significant decisions
-- **Show, then ask** - Summarize results and ask before proceeding
-- **Never deploy without explicit user approval**
+1. **Analyze first, ask second** - Understand the content before asking questions
+2. **Show what you found** - Summarize detected info, then ask for corrections/additions
+3. **Require local preview** - User must see the site locally before deployment
+4. **Never auto-deploy** - Deployment requires explicit user approval after preview
+
+---
 
 ## Workflow
 
-### Step 1: Gather Information
+### Step 1: Determine Input Type
 
-Use AskUserQuestion to collect upfront:
+Check what the user provided:
 
-1. **Project name** - Site identifier (e.g., "ai-workshop-2026")
-2. **Presentation title** - Main title for the site
-3. **Presenter name and profile link** - Full name + URL
-4. **Input type**:
-   - Pre-extracted JSON (`presentation.json` + `media/` folder)
-   - Raw PPTX file (needs extraction)
-   - Start fresh (clone template only)
-5. **Deployment target**: Cloudflare Pages (25MB limit) or Vercel
+- **PPTX file** → Go to Step 2 (extraction)
+- **Folder with `presentation.json`** → Skip to Step 3 (already extracted)
+- **Nothing specified** → Check if `sourcematerials/presentation.json` exists in current directory
 
-### Step 2: Extract Content (if PPTX)
+If no valid input found, ask the user to provide a PPTX file path or a folder containing extracted content.
+
+### Step 2: Extract PPTX Content
+
+If input is a PPTX file:
 
 ```bash
-pip install python-pptx
+pip install python-pptx  # if not already installed
 python scripts/extract-pptx.py <input.pptx> sourcematerials/
 ```
 
-**Limitations:** SmartArt exported as images, animations ignored, some formatting simplified.
+**After extraction, summarize what was extracted:**
+- Number of slides
+- Number of images/videos found
+- Any extraction warnings
 
-### Step 3: Analyze Content for Entities
+**Limitations to mention:** SmartArt exported as images, animations ignored, some formatting simplified.
 
-Read `sourcematerials/presentation.json` and create `src/data/entities.json` with AI-extracted entities: people, quotes, organizations, tools, terms, dates, images.
+### Step 3: Analyze Presentation Content
 
-**See [references/entities-format.md](references/entities-format.md) for the full schema and image categories.**
+Read `sourcematerials/presentation.json` and analyze the content. Extract:
+
+1. **Detected metadata:**
+   - Presentation title (from first slide or metadata)
+   - Speaker name (if found in slides)
+   - Any dates, event names, or affiliations mentioned
+
+2. **Content summary:**
+   - Total slide count and section breakdown
+   - Key topics/themes identified
+   - Notable people, organizations, tools mentioned
+   - Quotes found (with attributions)
+
+3. **Media inventory:**
+   - Count of images by type (photos, screenshots, diagrams, etc.)
+   - Videos found and their sizes
+
+**Present this summary to the user before proceeding.**
+
+### Step 4: Ask Clarifying Questions
+
+Based on your analysis, use `AskUserQuestion` to gather missing or uncertain information:
+
+**Always ask about:**
+1. **Project name** - URL-friendly identifier for deployment (suggest one based on title)
+2. **Deployment target** - Cloudflare Pages (25MB file limit) or Vercel
+
+**Ask only if not detected or uncertain:**
+- Presentation title (if unclear from slides)
+- Speaker name and profile URL
+- Speaker bio (brief paragraph)
+- Event details (name, date, location) if this is for a conference
+- Any corrections to detected information
+
+**DO NOT ask about things you can confidently infer from the presentation.**
+
+### Step 5: Generate entities.json
+
+Create `src/data/entities.json` with extracted entities from your Step 3 analysis.
+
+**See [references/entities-format.md](references/entities-format.md) for the full schema.**
+
+Entity types to extract:
+- **people** - Names mentioned, their roles, which slides reference them
+- **quotes** - Attributed statements with source info
+- **organizations** - Companies, institutions mentioned
+- **tools** - Software, AI tools, products discussed
+- **terms** - Technical terms with brief definitions
+- **dates** - Significant dates and what happened
+- **images** - Descriptions and categories for each image
 
 **CRITICAL - URL Extraction:**
-- **DO NOT blindly extract text that looks like URLs**
-- URLs often split across lines in presentations (e.g., "techczech." on one line, "net" on the next)
-- **ALWAYS reconstruct the complete URL from context**
-- **VALIDATE each URL** - check if it makes semantic sense
+- URLs often split across lines in presentations
+- ALWAYS reconstruct complete URLs from context
+- VALIDATE each URL makes semantic sense
 - If uncertain, ask the user to confirm
 
-**Optional batch image analysis:**
-```bash
-pip install google-genai pillow
-export GEMINI_API_KEY="your-key"
-python scripts/analyze-existing-images.py /path/to/site  # Uses Gemini 3 Flash Preview
-```
+### Step 6: Generate sessionInfo.ts
 
-### Step 4: Generate sessionInfo.ts
+Create `src/data/sessionInfo.ts` using:
+- Information detected in Step 3
+- User answers from Step 4
 
-Create `src/data/sessionInfo.ts` using info from Step 1.
+**See [references/customization.md](references/customization.md) for the full format.**
 
-**See [references/customization.md](references/customization.md) for the full format and example.**
+Fill in all fields you have data for. Leave optional fields empty (`""` or `[]`) if not applicable.
 
-### Step 5: Build
+### Step 7: Build and Local Preview
 
 ```bash
-npm run build
+npm run build  # Process media + compile + bundle
+npm run dev    # Start dev server
 ```
 
-This copies media to `public/assets/`, auto-compresses large videos (if ffmpeg available), and builds the React app.
+**Tell the user:**
+> The site is running at http://localhost:5173
+>
+> Please check:
+> - Home page shows correct title, speaker info, and abstract
+> - Slides page renders all slides with images/videos
+> - Navigation works (arrows, keyboard)
+> - Resources page shows extracted entities
+> - Media Gallery displays images correctly
 
-### Step 6: Preview
+**STOP and wait for user feedback.** Do not proceed until user responds.
 
-```bash
-npm run dev
-```
+### Step 8: Iterate Based on Feedback
 
-Guide user to verify: slides render, images/videos display, navigation works, Resources page shows correct entities.
+If user reports issues or wants changes:
+1. Make the requested fixes
+2. Rebuild if necessary (`npm run build`)
+3. Ask user to check again
+4. Repeat until user confirms it looks good
 
-### Step 7: Deploy (Optional)
+Common fixes:
+- Adjusting sessionInfo.ts content
+- Adding/removing entities
+- Fixing image descriptions or categories
+
+### Step 9: Deploy (Only on Explicit Approval)
+
+**DO NOT deploy unless the user explicitly says to deploy** (e.g., "deploy it", "looks good, deploy", "ship it").
+
+When user approves deployment:
 
 **Vercel:**
 ```bash
@@ -101,17 +171,25 @@ vercel --prod --yes
 
 **Cloudflare Pages:**
 ```bash
-wrangler pages deploy dist --project-name=<project-name>
+npm run build  # Ensure latest build
+npx wrangler pages deploy dist --project-name=<project-name>
 ```
 
-## Template Repository
+After deployment, provide the live URL to the user.
 
-Clone for new projects:
+---
+
+## Setting Up a New Project
+
+If starting fresh (no existing handout project):
+
 ```bash
 git clone https://github.com/techczech/PPT2HandoutSkill my-handout
 cd my-handout
 npm install
 ```
+
+Then proceed with Step 1.
 
 ## Requirements
 
