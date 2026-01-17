@@ -81,7 +81,21 @@ This repo includes a `/pptx-to-handout` skill (`.claude/skills/pptx-to-handout/S
 
 ## Image Analysis Scripts
 
-For AI-powered image description, the script supports multiple backends:
+For AI-powered image description, two modes are available:
+
+### Interactive Review UI (Recommended)
+
+```bash
+python scripts/image-review-server.py /path/to/site
+```
+
+Opens a web UI at http://localhost:8765 where you can:
+- Select backend and model from available options
+- Choose which images to analyze
+- Review and edit AI-generated descriptions
+- Approve results before saving
+
+### Batch Processing
 
 ```bash
 # List available backends and models

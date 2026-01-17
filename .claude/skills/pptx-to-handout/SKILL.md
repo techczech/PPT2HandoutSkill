@@ -132,16 +132,43 @@ This returns available backends and models:
 
 **Use `AskUserQuestion` to ask:**
 
-1. **Run image categorization?** - Yes / No / Skip (can do later)
+1. **Run image categorization?**
+   - **Yes, with review UI** - Launch web interface to review results before saving
+   - **Yes, batch process all** - Process all images automatically
+   - **Skip for now** - Can do later
+
 2. **If yes, which backend?** - Show only available backends from --list output
 3. **Which model?** - Show models available for the selected backend
 
-**Example question flow:**
-- "The presentation has 45 images. Would you like to run AI image categorization?"
-- If yes: "Available backends: LM Studio (llava-v1.6-mistral), Ollama (llava:13b). Which would you like to use?"
-- Then: "Which model? [list models for selected backend]"
+**Option A: Review UI (Recommended)**
 
-**Run the analysis:**
+Launch the review server for interactive image analysis:
+```bash
+python scripts/image-review-server.py .
+```
+
+This opens a web UI at http://localhost:8765 where the user can:
+- Select which images to analyze
+- Choose backend and model from dropdowns
+- Review and edit AI-generated descriptions before saving
+- Approve results individually or in batch
+
+Tell the user:
+> The image review UI is running at http://localhost:8765
+>
+> In the UI you can:
+> 1. Select a backend and model from the dropdowns
+> 2. Check the images you want to analyze
+> 3. Click "Analyze Selected" to process them
+> 4. Review and edit the results
+> 5. Click "Approve" on each result (or "Approve All")
+> 6. Click "Save & Exit" when done
+>
+> Press Ctrl+C in the terminal when finished.
+
+**Option B: Batch Processing**
+
+For automatic processing without review:
 ```bash
 # With auto-detection (uses LM Studio > Ollama > Gemini priority)
 python scripts/analyze-existing-images.py .
@@ -156,8 +183,8 @@ The script updates `src/data/presentation.json` with image descriptions, categor
 
 **If user skips:** Let them know they can run it later with:
 ```bash
-python scripts/analyze-existing-images.py . --list  # See available backends
-python scripts/analyze-existing-images.py .         # Run with auto-detection
+python scripts/image-review-server.py .  # Interactive review UI
+python scripts/analyze-existing-images.py .  # Batch processing
 ```
 
 ### Step 6: Generate sessionInfo.ts
