@@ -66,18 +66,61 @@ def check_ollama_available() -> bool:
 
 
 def get_lmstudio_models() -> list[dict]:
-    """Get list of available models from LM Studio."""
+    """Get list of available vision models from LM Studio using v0 API."""
     try:
-        req = Request(f"{LMSTUDIO_URL}/v1/models", method="GET")
+        # Try v0 API first (has type field for vision detection)
+        req = Request(f"{LMSTUDIO_URL}/api/v0/models", method="GET")
         with urlopen(req, timeout=5) as response:
             data = json.loads(response.read().decode())
-            return [{"id": m["id"], "name": m.get("id", "Unknown")} for m in data.get("data", [])]
+            models = []
+            for m in data.get("data", []):
+                # type "vlm" indicates vision-language model
+                if m.get("type") == "vlm":
+                    models.append({"id": m["id"], "name": m.get("id", "Unknown")})
+            return models
+    except (URLError, OSError, json.JSONDecodeError):
+        # Fall back to v1 API (no vision filtering)
+        try:
+            req = Request(f"{LMSTUDIO_URL}/v1/models", method="GET")
+            with urlopen(req, timeout=5) as response:
+                data = json.loads(response.read().decode())
+                return [{"id": m["id"], "name": m.get("id", "Unknown")} for m in data.get("data", [])]
+        except (URLError, OSError, json.JSONDecodeError):
+            return []
+
+
+def get_ollama_model_families(model_name: str) -> list[str]:
+    """Get the model families from Ollama's show endpoint."""
+    try:
+        req = Request(
+            f"{OLLAMA_URL}/api/show",
+            data=json.dumps({"name": model_name}).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST"
+        )
+        with urlopen(req, timeout=5) as response:
+            data = json.loads(response.read().decode())
+            return data.get("details", {}).get("families", [])
     except (URLError, OSError, json.JSONDecodeError):
         return []
 
 
+def is_ollama_vision_model(families: list[str]) -> bool:
+    """Check if Ollama model families indicate vision capability."""
+    vision_indicators = ["clip", "mllama"]
+    for family in families:
+        family_lower = family.lower()
+        # Check for known vision families
+        if family_lower in vision_indicators:
+            return True
+        # Check for vision-language family suffix (e.g., qwen25vl, qwen3vl)
+        if family_lower.endswith("vl"):
+            return True
+    return False
+
+
 def get_ollama_models() -> list[dict]:
-    """Get list of available models from Ollama, filtering for vision-capable models."""
+    """Get list of available vision models from Ollama."""
     try:
         req = Request(f"{OLLAMA_URL}/api/tags", method="GET")
         with urlopen(req, timeout=5) as response:
@@ -85,9 +128,9 @@ def get_ollama_models() -> list[dict]:
             models = []
             for m in data.get("models", []):
                 name = m.get("name", "")
-                # Common vision model patterns
-                if any(v in name.lower() for v in ["llava", "bakllava", "vision", "moondream", "minicpm-v", "cogvlm"]):
-                    models.append({"id": name, "name": name})
+                families = get_ollama_model_families(name)
+                if is_ollama_vision_model(families):
+                    models.append({"id": name, "name": name, "families": families})
             return models
     except (URLError, OSError, json.JSONDecodeError):
         return []
