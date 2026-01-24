@@ -54,7 +54,53 @@ Slides are classified based on two main factors:
 - `Video with description` (22 slides)
 - `Screenshot description` (5 slides)
 - `Hidden title for image or SmartArt` (1 slide)
-**Rendering**: Title at top, media centered below, optional description sidebar
+
+Media slides are classified into two sub-types based on whether they have description text:
+
+#### 5a. Media Only (No Description)
+**Detection**: No list/text content, just images/videos
+**Rendering**:
+- Blue strip at top with white title text (similar to quote slide bottom bar)
+- Media (images/videos) centered in remaining space
+- Uses MediaGallery component for multi-image layouts
+
+```
+┌────────────────────────────────────────────────────┐
+│            Title Text (white on blue)              │
+├────────────────────────────────────────────────────┤
+│                                                    │
+│              ┌────────────────┐                    │
+│              │     Image      │                    │
+│              │    or Video    │                    │
+│              └────────────────┘                    │
+│                                                    │
+└────────────────────────────────────────────────────┘
+```
+
+#### 5b. Media with Description
+**Detection**: Has list/text content alongside images/videos
+**Layout examples**: `Video with description`, `Screenshot description`
+**Rendering**:
+- Blue strip at top with white title text
+- Left side: Media (images/videos) centered
+- Right side: Gray box (~40% width) with description text, left-aligned, vertically centered
+- Description box adapts height to content
+
+```
+┌────────────────────────────────────────────────────┐
+│            Title Text (white on blue)              │
+├────────────────────────────────────────────────────┤
+│                           │                        │
+│    ┌────────────────┐     │  Description text      │
+│    │     Image      │     │  in gray box           │
+│    │    or Video    │     │                        │
+│    └────────────────┘     │  • Bullet points       │
+│                           │  • URL                 │
+│                           │                        │
+└────────────────────────────────────────────────────┘
+```
+
+**Note**: The gray description box uses `var(--color-muted, #f3f4f6)` for background, providing visual separation from the media area while maintaining readability.
 
 ### 6. Content Slides (Default)
 **Detection**: Layout contains "title only", "text only", or doesn't match other categories

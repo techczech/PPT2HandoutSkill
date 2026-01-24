@@ -1561,3 +1561,74 @@ Created `/Users/dominiklukes/gitrepos/ppt-tools/slidetypes.md` documenting all s
 9. Plus multiple commits for SmartArt, quote slides, gallery, outline, grid
 
 **Latest Deployment:** https://006a95e0.aiforresearch.pages.dev
+
+---
+
+## Session 3 Updates (January 24, 2026 - continued)
+
+### Media Slide Types Refinement
+
+Updated MediaSlide component to handle two distinct sub-types:
+
+#### 5a. Media Only (No Description)
+- Blue strip at top with **centered** white title text
+- Media (images/videos) centered in remaining space
+- Similar visual pattern to quote slide bottom bar
+
+#### 5b. Media with Description
+- Blue strip at top with **centered** white title text
+- Left side: Media (images/videos) centered
+- Right side: Gray box (~40% width) with description text, left-aligned, vertically centered
+
+**Key changes to `MediaSlide.tsx`:**
+```tsx
+// Type 1: Media only - blue strip at top
+if (!hasDescription) {
+  return (
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-card)' }}>
+      <div className="px-6 md:px-10 py-4 md:py-6" style={{ background: 'var(--color-primary)' }}>
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white text-center">
+          {slide.title}
+        </h2>
+      </div>
+      <div className="flex-1 flex items-center justify-center p-4 md:p-6">
+        <MediaGallery images={imageContent} videos={videoContent} />
+      </div>
+    </div>
+  );
+}
+
+// Type 2: Media with description - blue strip top, media left, gray description right
+return (
+  <div className="h-full flex flex-col" style={{ background: 'var(--color-card)' }}>
+    <div className="px-6 md:px-10 py-4 md:py-6" style={{ background: 'var(--color-primary)' }}>
+      <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-white text-center">
+        {slide.title}
+      </h2>
+    </div>
+    <div className="flex-1 flex flex-col lg:flex-row">
+      <div className="flex-1 flex items-center justify-center p-4 md:p-6">
+        <MediaGallery ... />
+      </div>
+      <div className="lg:w-2/5 flex items-center p-4 md:p-6"
+           style={{ background: 'var(--color-muted, #f3f4f6)' }}>
+        {textContent.map(...)}
+      </div>
+    </div>
+  </div>
+);
+```
+
+### Content Slide Statement Rendering
+
+Updated content slides with title-only to render as "statement slides":
+- Left-aligned text on light background
+- Bold formatting for text before first colon (e.g., "**AI Hype:** There is always hype...")
+- Question splitting (e.g., "Why? What for?" renders as two separate lines)
+- Used by TitleSlide and ContentSlide when no content items present
+
+### Files Modified (Session 3)
+- `src/components/slides/MediaSlide.tsx` - Two-type rendering with blue title strip
+- `src/components/slides/TitleSlide.tsx` - FormattedTitle for statement slides
+- `src/components/slides/ContentSlide.tsx` - FormattedTitle for statement slides
+- `slidetypes.md` - Documented 5a/5b media types, 6a/6b/6c content types
