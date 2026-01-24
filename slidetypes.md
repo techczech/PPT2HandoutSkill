@@ -150,80 +150,24 @@ Content slides are further classified into three sub-types based on their conten
 
 SmartArt diagrams require special rendering based on their layout type.
 
-### 1. Horizontal Icon Layouts (2-4 items side by side)
-**Detection**: Layout contains "icon label description", "icon label list", or "centered icon"; OR 2-4 nodes all with icons and children
-**Examples**:
-- `Icon Label Description List` (11 instances) - e.g., slide 63 "AI capability is MO"
-- `Icon Label List` (3 instances)
-- `Centered Icon Label Description List` (2 instances)
+**See [smartarttypes.md](smartarttypes.md) for comprehensive SmartArt documentation including:**
+- All 8 layout types found in presentations
+- Detection logic for each type
+- ASCII diagrams showing expected rendering
+- Slide examples for each layout
+- Priority implementation order
 
-**Rendering**: Items displayed horizontally with icon on top, title below, description at bottom
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Title (blue strip)                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│    [icon]                        [icon]                     │
-│                                                             │
-│    Title                         Title                      │
-│    Description line 1            Description line 1         │
-│    Description line 2            Description line 2         │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
-- Icons: Large (w-20/h-20 to w-24/h-24), dark blue filter
-- Titles: Bold, dark blue (`var(--color-primary)`)
-- Descriptions: Regular weight, dark blue
+**Quick Summary of Working Layouts:**
+| Layout | Rendering |
+|--------|-----------|
+| Icon Vertical Solid List | Vertical stacked cards (light grey, dark blue text) |
+| Icon Label Description List | Horizontal icons with descriptions |
+| Basic Linear Process Numbered | Horizontal numbered cards |
 
-### 2. Vertical List Layouts (5+ items stacked)
-**Detection**: Layout contains "vertical", "stacked", or "solid"; OR 5+ nodes; OR empty layout with simple structure
-**Examples**:
-- `Icon Vertical Solid List` (22 instances) - e.g., slide 65 "The current frontier of AI capabilities"
-- Empty layout `""` with simple node structure (8 instances)
-
-**Rendering**: Stacked cards with light grey background, dark blue text
-```
-┌───────────────────────────────────────────────────┐
-│ [icon]  Main Text                    Description  │
-├───────────────────────────────────────────────────┤
-│ [icon]  Main Text                    Description  │
-├───────────────────────────────────────────────────┤
-│ [icon]  Main Text                    Description  │
-└───────────────────────────────────────────────────┘
-```
-- Background: Light grey (`#e5e7eb`)
-- Icons: Dark blue filter
-- Text: Dark blue (`var(--color-primary)`)
-- Layout: Title on left, description on right (flex justify-between)
-
-### 3. Horizontal Process/Numbered Layouts
-**Detection**: Layout contains "horizontal", "process", or "numbered"
-**Examples**:
-- `Basic Linear Process Numbered` (1 instance) - "Plan for the day"
-- `Horizontal Action List` (1 instance)
-
-**Rendering**: Horizontal row of numbered cards
-```
-┌──────────────────────────────────────────────────────────────────────┐
-│ ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐  ┌──────┐                    │
-│ │  1   │  │  2   │  │  3   │  │  4   │  │  5   │                    │
-│ │      │  │      │  │      │  │      │  │      │                    │
-│ │ Text │  │ Text │  │ Text │  │ Text │  │ Text │                    │
-│ │• sub │  │• sub │  │• sub │  │• sub │  │• sub │                    │
-│ └──────┘  └──────┘  └──────┘  └──────┘  └──────┘                    │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
-**Data structure for numbered layouts**:
-- Nodes with `level: 0` and numeric text ("1", "2", etc.) = circle numbers
-- Nodes with `level: 1` and children = card content
-- Children contain sub-items (times, descriptions)
-
-### 3. Circle/Icon Layouts
-**Detection**: Layout contains "circle"
-**Examples**: `Icon Circle Label List` (2 instances)
-
-**Rendering**: Items with prominent circular icons
+**Layouts Needing Implementation:**
+- Empty layouts (workflow, timeline, pyramid, grid, annotated gallery)
+- Icon Circle Label List
+- Horizontal Action List
 
 ---
 
