@@ -1632,3 +1632,73 @@ Updated content slides with title-only to render as "statement slides":
 - `src/components/slides/TitleSlide.tsx` - FormattedTitle for statement slides
 - `src/components/slides/ContentSlide.tsx` - FormattedTitle for statement slides
 - `slidetypes.md` - Documented 5a/5b media types, 6a/6b/6c content types
+
+---
+
+### SmartArt Layout Improvements
+
+#### Issue: All SmartArt rendered as dark blue cards
+SmartArt was rendering with dark blue background and white text regardless of layout type. This didn't match the original slide designs.
+
+#### Solution: Split horizontal vs vertical layouts
+
+**1. Horizontal Icon Layouts** (2-4 items with icons)
+Detection: `isHorizontalIconLayout()` checks for:
+- Layout contains "icon label description", "icon label list", "centered icon"
+- OR 2-4 nodes all with icons and children
+
+Rendering (`HorizontalIconDiagram`):
+```tsx
+<div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start justify-center">
+  {nodes.map((node) => (
+    <div className="flex-1 flex flex-col items-start max-w-sm">
+      <img src={node.icon} className="w-20 h-20 md:w-24 md:h-24"
+           style={{ filter: 'dark-blue-filter' }} />
+      <h3 className="text-xl md:text-2xl font-bold"
+          style={{ color: 'var(--color-primary)' }}>{node.text}</h3>
+      {node.children.map(child => <p>{child.text}</p>)}
+    </div>
+  ))}
+</div>
+```
+
+**2. Vertical List Layouts** (5+ items or explicit vertical)
+Detection: `isVerticalListLayout()` checks for:
+- Layout contains "vertical", "stacked", "solid"
+- OR 5+ nodes
+- OR empty layout with simple structure
+
+Rendering (`GroupedCardNode`):
+- Light grey background (`#e5e7eb`) instead of dark blue
+- Dark blue text (`var(--color-primary)`) instead of white
+- Icons filtered to dark blue
+- Title on left, description on right
+
+**3. TitleSlide SmartArt handling**
+Added new rendering path for slides with SmartArt but no media:
+```tsx
+if (hasSmartArt && !hasMedia) {
+  return (
+    <div className="h-full flex flex-col" style={{ background: 'var(--color-card)' }}>
+      {/* Blue title strip */}
+      <div style={{ background: 'var(--color-primary)' }}>
+        <h1 className="text-white text-center">{slide.title}</h1>
+      </div>
+      {/* SmartArt centered below */}
+      <div className="flex-1 flex items-center justify-center p-6 md:p-10">
+        {smartArtContent.map(c => <ContentRenderer content={c} />)}
+      </div>
+    </div>
+  );
+}
+```
+
+#### Examples
+- Slide 63 "AI capability is MO" - 2 horizontal items (Model, Orchestration)
+- Slide 65 "The current frontier of AI capabilities" - 5 vertical items (Multimodality, Long Context, etc.)
+- Slide 67 "Accessing the Frontier" - 3 horizontal items (Models, Apps, Chatbots)
+
+### Files Modified (SmartArt)
+- `src/components/content/SmartArtDiagram.tsx` - Added horizontal icon layout, updated vertical list styling
+- `src/components/slides/TitleSlide.tsx` - Added SmartArt-only slide handling with blue title strip
+- `slidetypes.md` - Documented SmartArt layout types
