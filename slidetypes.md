@@ -62,9 +62,41 @@ Slides are classified based on two main factors:
 - `Title only (for single text lines)` (81 slides)
 - `Title Only` (25 slides)
 - `Text only with title` (1 slide)
+
+Content slides are further classified into three sub-types based on their content:
+
+#### 6a. Title + Bullet Points
+**Detection**: Has list content with bullet items
+**Rendering**: Title at top, bullet list below (max-width constrained to ~55ch for readability)
+
+#### 6b. Title + Text
+**Detection**: Has text content but not bullet list
+**Rendering**: Title at top, text content below (max-width constrained)
+
+#### 6c. Statement Slides (Title Only)
+**Detection**: No content blocks (images, lists, SmartArt) - just the title
+**Purpose**: Short statements, provocative questions, or transitional phrases that serve as signposts
 **Rendering**:
-- If no content → full gradient background with centered title
-- If has content → title at top, content below (max-width constrained)
+- Light background (`var(--color-card)`)
+- Left-aligned text (not centered)
+- Large text size (responsive: 2xl to 5xl)
+- Primary color text
+- Special formatting for titles with colons or question marks:
+  - **Colon pattern** (e.g., "AI Hype: What's real and what's not"): Bold the prefix before colon
+  - **Question pattern** (e.g., "Why? What for?"): Split into separate paragraphs
+- Max-width 4xl to prevent overly wide lines
+
+```
+┌────────────────────────────────────────────────────┐
+│                                                    │
+│  Statement Slide:                                  │
+│  What does it mean to                              │
+│  understand?                                       │
+│                                                    │
+└────────────────────────────────────────────────────┘
+```
+
+**Note**: Statement slides are used for accessibility - the title text serves as the slide's accessible name while also being the visual content. Previously these were rendered with centered white text on a gradient background, but left-aligned dark text on light background is more readable and matches common presentation design patterns.
 
 ---
 
@@ -252,16 +284,19 @@ function getSmartArtCategory(layout: string, nodes: SmartArtNode[]): 'vertical-l
 
 ## Known Issues & TODO
 
+### Resolved Issues
+1. ~~**"Basic Linear Process Numbered"** renders as vertical bars instead of horizontal numbered cards~~ - **FIXED**: Added `HorizontalNumberedDiagram` component
+2. ~~**SmartArt without layout** defaults to list style~~ - **FIXED**: Detects by node structure when layout is empty
+3. ~~**Bold text in quotes** - need to ensure `runs` array is parsed~~ - **FIXED**: `BulletList` component parses runs for formatting
+4. ~~**Statement slides** rendered with gradient background~~ - **FIXED**: Now uses left-aligned text on light background
+
 ### Current Issues
-1. **"Basic Linear Process Numbered"** renders as vertical bars instead of horizontal numbered cards
-2. **SmartArt without layout** defaults to list style but may need different handling
-3. **Bold text in quotes** - need to ensure `runs` array is parsed for formatting
+1. **Three-zone sidebar layouts** - Image + SmartArt combinations need careful width balancing
+2. **Video in media gallery** - Videos play inline; may want lightbox option
 
 ### Needed Improvements
-1. Add horizontal SmartArt rendering component
-2. Better detection of numbered vs non-numbered layouts
-3. Handle "Horizontal Action List" layout
-4. Consider extracting number nodes separately from content nodes in numbered layouts
+1. Consider adding zoom capability to statement slides for very long text
+2. Better responsive handling for three-zone layouts on mobile
 
 ---
 
@@ -282,6 +317,18 @@ function getSmartArtCategory(layout: string, nodes: SmartArtNode[]): 'vertical-l
 - Content: SmartArt `Basic Linear Process Numbered`
 - Data structure: Mixed nodes with level 0 (numbers) and level 1 (content)
 - Should render: 5 horizontal cards with numbers in circles
+
+### Example: Statement Slide (Slide 20)
+- Layout: `Title only (for single text lines)`
+- Content: None (empty content array)
+- Title: "AI Hype: There is always AI hype but don't be a zealot or a nihilist"
+- Should render: Left-aligned text on light background, with "AI Hype:" in bold
+
+### Example: Statement Slide with Questions (Slide 74)
+- Layout: `Title Only`
+- Content: None
+- Title: "What could it do? What it can do now?"
+- Should render: Two questions on separate lines, left-aligned on light background
 
 ---
 
