@@ -10,12 +10,12 @@ This document classifies all SmartArt layouts found in presentations and describ
 |-------------|-------|-----------|--------------|----------------|
 | Icon Vertical Solid List | 22 | Yes | Yes | Working (vertical cards) |
 | Icon Label Description List | 11 | Yes | Yes | Working (horizontal icons) |
-| (empty layout) | 8 | Mixed | Mixed | Needs analysis |
-| Icon Label List | 3 | Yes | No | Needs horizontal layout |
+| (empty layout) | 8 | Mixed | Mixed | Working (auto-detected by structure) |
+| Icon Label List | 3 | Yes | No | Working (horizontal icons) |
 | Centered Icon Label Description List | 2 | Yes | Yes | Working (horizontal icons) |
-| Icon Circle Label List | 2 | Yes | No | Needs circular icon layout |
+| Icon Circle Label List | 2 | Yes | No | Working (horizontal icons - same as Icon Label) |
 | Basic Linear Process Numbered | 1 | No | Yes | Working (numbered cards) |
-| Horizontal Action List | 1 | No | Yes | Needs horizontal flow |
+| Horizontal Action List | 1 | No | Yes | Working (horizontal comparison cards) |
 
 ---
 
@@ -77,11 +77,33 @@ This document classifies all SmartArt layouts found in presentations and describ
 
 These need individual analysis based on structure:
 
-#### 3a. Stats/Metrics Display (Slide 17)
+#### 3a. Stats/Metrics Display (Slide 17) - IMPLEMENTED
 **Slide**: 17 "Since 2022"
 **Structure**: 3 nodes with icons, no children
 **Content**: "1000+ people", "2000+ slides", "100+ presentations"
-**Suggested rendering**: Horizontal stats with large numbers
+**Status**: Working - uses `StatsDisplayDiagram` component
+
+**Detection Logic** (all must be true):
+1. Empty layout (`layout === ""`)
+2. Has icons (all nodes have icon)
+3. No children (all nodes have 0 children)
+4. Short text (all nodes < 30 chars)
+5. Contains numbers (any node has digits)
+
+**Only slide 17 matches** - very specific criteria ensures no false positives.
+
+```typescript
+function isStatsLayout(layout: string, nodes: SmartArtNode[]): boolean {
+  if (layout && layout.trim() !== '') return false;
+  const hasIcons = nodes.some(n => n.icon);
+  const noChildren = nodes.every(n => !n.children || n.children.length === 0);
+  const shortText = nodes.every(n => n.text.length < 30);
+  const hasNumbers = nodes.some(n => /\d/.test(n.text));
+  return hasIcons && noChildren && shortText && hasNumbers;
+}
+```
+
+**Visual Design**: Horizontal row with large icons, bold numbers (split from text), smaller labels.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -91,34 +113,41 @@ These need individual analysis based on structure:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### 3b. Pyramid/Funnel Layout (Slide 35)
+#### 3b. Ascending Arrow Layout (Slide 35) - IMPLEMENTED
 **Slide**: 35 "Levels of investment in technology adoption"
 **Structure**: 3 nodes (Low/Medium/High investment) with children
 **Content**: Hierarchical levels with sub-items
-**Suggested rendering**: Vertical pyramid/chevron stack
+**Status**: Working - uses `PyramidDiagram` component
+
+**Detection**: 2-4 items with level-related keywords (low/medium/high/tier/basic/advanced) and children.
+
+**Visual Design**: Three columns with ascending vertical positions, circles at top, widening gray wedge at bottom.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  ┌─────────────────────────────────────────────────┐        │
-│  │ High investment                                  │        │
-│  │   • Rethink how you work • Schedule learning    │        │
-│  └─────────────────────────────────────────────────┘        │
-│      ┌─────────────────────────────────────────┐            │
-│      │ Medium investment                        │            │
-│      │   • Create account • Configure settings  │            │
-│      └─────────────────────────────────────────┘            │
-│          ┌─────────────────────────────────────┐            │
-│          │ Low investment                       │            │
-│          │   • Learn a shortcut • Install app   │            │
-│          └─────────────────────────────────────┘            │
+│                                            ●                │
+│                        ●                   High investment  │
+│    ●                   Medium investment   • Rethink work   │
+│    Low investment      • Create account    • Schedule time  │
+│    • Learn shortcut    • Configure         • Change routine │
+│    • Install app       • Watch tutorials                    │
+│  ▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁ │
+│  ╲                  widening gray wedge                   ╱ │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### 3c. Grid/Tag Cloud (Slide 45)
+**Implementation Notes**:
+- Sort nodes by level: `low/basic` (1) → `medium/intermediate` (2) → `high/advanced` (3)
+- Use margin-top classes for ascending effect: `['mt-32 md:mt-40', 'mt-16 md:mt-20', 'mt-0']`
+- Widening wedge: SVG polygon `points="0,60 0,55 400,0 400,60"` with gray fill (#d1d5db)
+
+#### 3c. Grid/Tag Cloud (Slide 45) - IMPLEMENTED
 **Slide**: 45 "Large Language Models"
 **Structure**: 8 nodes, no icons, no children
 **Content**: List of AI application areas (Music separation, Robotics, NLP, etc.)
-**Suggested rendering**: Grid of boxes/tags
+**Status**: Working - uses `TagGridDiagram` component
+
+**Detection**: 6+ items, no icons, no children.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -133,11 +162,13 @@ These need individual analysis based on structure:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### 3d. Annotated Gallery/Grid (Slide 53)
+#### 3d. Annotated Gallery/Grid (Slide 53) - IMPLEMENTED
 **Slide**: 53 "Researcher's AI Workbench"
 **Structure**: 6 nodes with icons and children
 **Content**: Tool names with feature descriptions
-**Suggested rendering**: 2x3 or 3x2 grid of cards with icon, title, and bullet descriptions
+**Status**: Working - uses `AnnotatedGridDiagram` component
+
+**Detection**: 4-8 items with icons and children.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -155,44 +186,49 @@ These need individual analysis based on structure:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### 3e. Vertical Workflow/Process (Slides 177, 319)
+#### 3e. Vertical Workflow/Process (Slides 177, 319) - IMPLEMENTED
 **Slides**: 177 "Steps", 319 "Example: Qualitative Survey Data analysis"
 **Structure**: 5-6 nodes, no icons, with or without children
 **Content**: Sequential process steps
-**Suggested rendering**: Vertical flow with arrows/connectors
+**Status**: Working - uses `VerticalWorkflowDiagram` component
+
+**Detection**: 4+ items + no icons + (avg text >= 40 chars OR has children)
+- Slide 177: Short titles (avg 22 chars) but HAS children → matches
+- Slide 319: Longer text (avg 55 chars), no children → matches
+
+**Styling**: Light gray boxes (#e5e7eb), dark blue text, dark blue arrows (▼)
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│     ┌─────────────────────────────────────┐                 │
-│     │ Step 1: Pull out text items         │                 │
-│     └──────────────────┬──────────────────┘                 │
-│                        ▼                                    │
-│     ┌─────────────────────────────────────┐                 │
-│     │ Step 2: Send to LLM to identify     │                 │
-│     └──────────────────┬──────────────────┘                 │
-│                        ▼                                    │
-│     ┌─────────────────────────────────────┐                 │
-│     │ Step 3: LLM reads and assigns code  │                 │
-│     └──────────────────┬──────────────────┘                 │
-│                        ▼                                    │
-│     ┌─────────────────────────────────────┐                 │
-│     │ Step 4: Record theme codes          │                 │
-│     └─────────────────────────────────────┘                 │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────┐  ← #e5e7eb background
+│ Step 1: Pull out text items         │  ← var(--color-primary) text
+│   • child annotation                │  ← text-gray-600
+└─────────────────┬───────────────────┘
+                  ▼                      ← var(--color-primary)
+┌─────────────────────────────────────┐
+│ Step 2: Send to LLM to identify     │
+└─────────────────┬───────────────────┘
+                  ▼
+┌─────────────────────────────────────┐
+│ Step 3: Record theme codes          │
+└─────────────────────────────────────┘
 ```
 
-#### 3f. Horizontal Timeline (Slide 341)
-**Slide**: 341 "What to expect"
+#### 3f. Horizontal Timeline (Slide 340) - IMPLEMENTED
+**Slide**: 340 "What to expect"
 **Structure**: 3 nodes (Long term, Soon, Today) with children
 **Content**: Time-based progression
-**Suggested rendering**: Horizontal timeline with markers
+**Status**: Working - uses `HorizontalTimeline` component
+
+**Detection**: Nodes contain time-related keywords (today, soon, long term, now, future, etc.)
+
+**Rendering**: Horizontal timeline with connecting line, circle markers, phase labels, and content cards below.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
 │  Today ──────────────► Soon ──────────────► Long term       │
-│    │                     │                     │            │
-│    ▼                     ▼                     ▼            │
+│    ●                     ●                     ●            │
+│                                                             │
 │  ┌──────────┐       ┌──────────┐       ┌──────────┐        │
 │  │Menu of   │       │Choose    │       │Reflect   │        │
 │  │options   │       │relevant  │       │Practice  │        │
@@ -251,26 +287,24 @@ These need individual analysis based on structure:
 ---
 
 ### 6. Icon Circle Label List (2 instances)
-**Current rendering**: Falls through to default
-**Status**: Needs circular icon styling
+**Current rendering**: Same as Icon Label Description List (horizontal icons)
+**Status**: Working
 
 **Slides**: 27, 36
 
 **Characteristics**:
 - 2 nodes with icons
 - No children
-- Icons should be in circles
+- Originally had circular icon styling in PowerPoint
+
+**Note**: Rendered using the same horizontal icon layout as Icon Label Description List. The circular styling is not replicated - standard icon display is used instead for consistency.
 
 **Example**: Slide 27 "How much time?" - items about time investment
-
-**Suggested rendering**: Large circular icons with text below
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
-│      ╭──────╮                    ╭──────╮                   │
-│      │ icon │                    │ icon │                   │
-│      ╰──────╯                    ╰──────╯                   │
+│    [icon]                        [icon]                     │
 │                                                             │
 │    Just "spending time"          10 hours is                │
 │    is not enough                 not enough                 │
@@ -303,9 +337,9 @@ These need individual analysis based on structure:
 
 ---
 
-### 8. Horizontal Action List (1 instance)
-**Current rendering**: Falls through to default
-**Status**: Needs horizontal comparison layout
+### 8. Horizontal Action List (1 instance) - IMPLEMENTED
+**Current rendering**: Side-by-side comparison cards
+**Status**: Working - uses `HorizontalComparisonDiagram` component
 
 **Slide**: 194 "Key distinction"
 
@@ -314,16 +348,18 @@ These need individual analysis based on structure:
 - Has children for comparison points
 - No icons
 
-**Suggested rendering**: Two-column comparison
+**Detection**: Layout contains "action list" or "comparison", OR 2-3 items without icons that all have children.
+
+**Rendering**: Side-by-side cards with centered title and bullet children.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                                                             │
 │    ┌─────────────────┐        ┌─────────────────┐          │
-│    │     Humans      │   vs   │  Language Model │          │
-│    ├─────────────────┤        ├─────────────────┤          │
-│    │ • Point 1       │        │ • Point 1       │          │
-│    │ • Point 2       │        │ • Point 2       │          │
+│    │     Humans      │        │  Language Model │          │
+│    │                 │        │                 │          │
+│    │  Context =      │        │  Context = Text │          │
+│    │  Text + Memory  │        │                 │          │
 │    └─────────────────┘        └─────────────────┘          │
 │                                                             │
 └─────────────────────────────────────────────────────────────┘
@@ -408,20 +444,25 @@ function detectSmartArtType(layout: string, nodes: SmartArtNode[]): SmartArtType
 
 ## Priority Implementation Order
 
-1. **High Priority** (user-reported issues):
-   - Slide 319: Vertical workflow
-   - Slide 341: Horizontal timeline
-   - Slide 35: Pyramid/funnel
-   - Slide 53: Annotated grid
+**All SmartArt layouts are now implemented!**
 
-2. **Medium Priority**:
-   - Icon Circle Label List (slides 27, 36)
-   - Horizontal Action List (slide 194)
-   - Icon Label List (slides 19, 146, 297)
+1. **Explicit Layout Names** (detected by layout string):
+   - ✓ Icon Vertical Solid List - `GroupedCardNode` (vertical cards)
+   - ✓ Icon Label Description List - `HorizontalIconDiagram`
+   - ✓ Icon Label List - `HorizontalIconDiagram`
+   - ✓ Icon Circle Label List - `HorizontalIconDiagram`
+   - ✓ Centered Icon Label Description List - `HorizontalIconDiagram`
+   - ✓ Basic Linear Process Numbered - `HorizontalNumberedDiagram`
+   - ✓ Horizontal Action List - `HorizontalComparisonDiagram`
 
-3. **Low Priority** (already working or rare):
-   - Stats display (slide 17)
-   - Grid layout (slide 45)
+2. **Empty Layout** (auto-detected by structure):
+   - ✓ Timeline (time keywords + children) - `HorizontalTimeline`
+   - ✓ Pyramid (level keywords + children) - `PyramidDiagram`
+   - ✓ Stats Display (icons, no children, numbers) - `StatsDisplayDiagram`
+   - ✓ Annotated Grid (4-8 items, icons, children) - `AnnotatedGridDiagram`
+   - ✓ Vertical Workflow (4+ items, no icons, no children) - `VerticalWorkflowDiagram`
+   - ✓ Tag Grid (6+ items, no icons, no children) - `TagGridDiagram`
+   - ✓ Vertical List (fallback) - `GroupedCardNode`
 
 ---
 

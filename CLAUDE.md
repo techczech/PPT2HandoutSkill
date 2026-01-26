@@ -120,11 +120,54 @@ For Gemini, install: `pip install google-genai pillow`
 ## Content Types
 
 The presentation.json content array supports:
-- `heading` - Text with level (1-6)
-- `list` - Bullet or numbered with nested items
+- `heading` - Text with level (1-6), optional `runs` for formatting
+- `list` - Bullet or numbered with nested items, optional `runs` for formatting
 - `image` - With optional AI-generated description, quote_text, category
 - `smart_art` - Hierarchical nodes with icons
 - `video` - MP4 files
+- `shape` - Auto shapes (arrows, connectors, symbols)
+
+## Text Formatting
+
+Text items (headings, list items) may include a `runs` array when formatting is present:
+```json
+{
+  "text": "This is bold text",
+  "runs": [
+    {"text": "This is "},
+    {"text": "bold", "bold": true},
+    {"text": " text"}
+  ]
+}
+```
+
+Run properties:
+- `bold`, `italic`, `underline`: Boolean formatting flags
+- `url`: Hyperlink URL if present
+- `font_color`: Hex color (e.g., "FF0000")
+
+## Shape Extraction
+
+Meaningful shapes (arrows, connectors, symbols like ≠, +, -, etc.) are extracted:
+```json
+{
+  "type": "shape",
+  "shape_type": "math_not_equal",
+  "shape_name": "Not Equal 2",
+  "fill_color": "C00000",
+  "position": {"left": 100, "top": 200, "width": 50, "height": 50},
+  "animation_order": 1
+}
+```
+
+Shape properties:
+- `shape_type`: Auto shape type (e.g., "right_arrow", "math_not_equal")
+- `shape_name`: PowerPoint shape name
+- `position`: {left, top, width, height} in EMUs
+- `fill_color`, `line_color`: Hex colors
+- `rotation`: Angle in degrees
+- `animation_order`: Entry order in slide animations (1-based)
+- `text`, `runs`: Text content inside the shape if any
 
 ## Cloudflare Pages Considerations
 
