@@ -52,14 +52,15 @@ sourcematerials/media/{uuid}/      →  processMedia.js  →  public/assets/
 - `Presentation` - Root type containing sections and metadata
 - `Section` - Named group of slides
 - `Slide` - Individual slide with order, title, layout, notes, content
-- `ContentBlock` - Union type: `HeadingContent | ListContent | ImageContent | SmartArtContent | VideoContent`
+- `ContentBlock` - Union type: `HeadingContent | ListContent | ImageContent | SmartArtContent | VideoContent | ShapeContent`
 - `FlatSlide` - Slide with navigation metadata (globalIndex, sectionIndex)
 
 ### Page Structure
 | Route | Component | Purpose |
 |-------|-----------|---------|
 | `/` | HomePage | Session info, speaker bio, abstract |
-| `/slides/:n` | SlidesPage | Slide viewer with navigation |
+| `/slides/:n` | SlidesPage | Slide viewer with 3 view modes (content/screenshot/outline) |
+| `/grid` | GridPage | Thumbnail grid of all slides |
 | `/resources` | ResourcesPage | Extracted entities from entities.json |
 | `/media-gallery` | MediaGalleryPage | Filterable image/video grid |
 | `/about` | AboutPage | Presentation stats |
@@ -69,6 +70,12 @@ sourcematerials/media/{uuid}/      →  processMedia.js  →  public/assets/
 - `useKeyboard` handles arrow keys, space, home/end for slide navigation
 - `useGlobalKeyboard` handles `/` for search, `?` for help across all pages
 - `useSearch` provides full-text search across slides, notes, and content
+
+### View Modes
+- `useSlideViewMode` hook manages content/screenshot/outline view toggle
+- `v` key cycles through view modes: content → screenshot → outline
+- `d` key opens Grid view
+- `Esc` returns from Grid to Slides
 
 ## Claude Code Skill
 

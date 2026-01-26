@@ -2,6 +2,8 @@ import type { SmartArtContent, SmartArtNode } from '../../data/types';
 
 interface SmartArtDiagramProps {
   content: SmartArtContent;
+  fillSpace?: boolean;
+  theme?: 'light' | 'dark';
 }
 
 function SmartArtNodeComponent({ node, depth = 0 }: { node: SmartArtNode; depth?: number }) {
@@ -46,7 +48,7 @@ function SmartArtNodeComponent({ node, depth = 0 }: { node: SmartArtNode; depth?
   );
 }
 
-export default function SmartArtDiagram({ content }: SmartArtDiagramProps) {
+export default function SmartArtDiagram({ content, fillSpace: _fillSpace = false, theme: _theme = 'light' }: SmartArtDiagramProps) {
   if (!content.nodes || content.nodes.length === 0) {
     return null;
   }

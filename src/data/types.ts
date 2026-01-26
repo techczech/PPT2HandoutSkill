@@ -31,7 +31,8 @@ export type ContentBlock =
   | ListContent
   | ImageContent
   | SmartArtContent
-  | VideoContent;
+  | VideoContent
+  | ShapeContent;
 
 export interface HeadingContent {
   type: 'heading';
@@ -45,10 +46,17 @@ export interface ListContent {
   items: ListItem[];
 }
 
+export interface TextRun {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+}
+
 export interface ListItem {
   text: string;
   level: number;
   children: ListItem[];
+  runs?: TextRun[];
 }
 
 export interface ImageContent {
@@ -57,6 +65,7 @@ export interface ImageContent {
   alt: string;
   caption: string;
   description?: string; // AI-generated description of image content
+  category?: string; // AI-generated category (tweet, screenshot, diagram, etc.)
   quote_text?: string; // Extracted quote from image (tweets, messages, etc.)
   quote_attribution?: string; // Who said the quote
 }
@@ -80,6 +89,19 @@ export interface VideoContent {
   type: 'video';
   src: string;
   title: string;
+}
+
+export interface ShapeContent {
+  type: 'shape';
+  shape_type: string;
+  shape_name: string;
+  position: {
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+  };
+  fill_color: string;
 }
 
 // Flattened slide with section info for navigation
@@ -135,6 +157,8 @@ export interface QuoteResource {
   attribution?: string;
   slideIndex: number;
   slideTitle: string;
+  extractedFromImage?: boolean;
+  topic?: string;
 }
 
 export interface ImageResource {
@@ -161,6 +185,7 @@ export interface LinkResource {
   url: string;
   label: string;
   slideIndex?: number;
+  linkType?: string;
 }
 
 export interface ExtractedResources {

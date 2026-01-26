@@ -354,10 +354,38 @@ function getSmartArtCategory(layout: string, nodes: SmartArtNode[]): 'vertical-l
 
 ---
 
+## Special Slide Types
+
+### 7. Intro Slide (First Title Slide with QR Code)
+**Detection**: `slide.order === 1` AND layout contains "title slide" AND has image (QR code)
+**Rendering**:
+- Light gray gradient background
+- Left side (40%): QR code image with URL below
+- Right side (50%): Title in dark blue box
+- Bottom: Email in dark blue strip
+
+### 8. Final Slide (Thank You)
+**Detection**: Layout contains "final" OR title equals "Thank you"
+**Rendering**:
+- Gradient background (primary color)
+- Large centered title
+- Contact info as clickable links
+
+### 9. License Slide
+**Detection**: Title contains "creative commons" OR "licensed under"
+**Rendering**:
+- Light card background
+- CC BY license icon (linked to creativecommons.org)
+- License text parsed from title
+- "View full license terms" link
+
+---
+
 ## File References
 
 - **Layout detection**: `src/utils/slideHelpers.ts`
 - **Slide components**: `src/components/slides/*.tsx`
 - **SmartArt rendering**: `src/components/content/SmartArtDiagram.tsx`
 - **Content rendering**: `src/components/content/ContentRenderer.tsx`
+- **Shape rendering**: `src/components/content/ShapeBlock.tsx`
 - **Type definitions**: `src/data/types.ts`

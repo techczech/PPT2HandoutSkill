@@ -43,6 +43,25 @@ For images, provide a rich description including:
 - Identify key technical terms used
 - Include brief definitions
 
+### Links
+- Extract all URLs from slide content and notes
+- Classify each link by type (see Link Types below)
+- Reconstruct split URLs that may span multiple lines
+
+## Link Types
+
+When extracting links, classify them by type:
+
+| Type | Description |
+|------|-------------|
+| `tool` | AI tools, software, applications |
+| `demo` | Live demos, interactive examples |
+| `article` | Blog posts, news articles |
+| `documentation` | Official docs, guides |
+| `research` | Academic papers, studies |
+| `personal` | Personal websites, profiles |
+| `website` | General websites |
+
 ## Image Categories
 
 Assign one of these categories to each image:
@@ -86,7 +105,17 @@ Assign one of these categories to each image:
       "text": "The actual quote text...",
       "attribution": "Person Name",
       "source": "Tweet, November 30, 2022",
-      "slideIndex": 9
+      "slideIndex": 9,
+      "extractedFromImage": true,
+      "topic": "ai_technology"
+    }
+  ],
+  "links": [
+    {
+      "url": "https://example.com/tool",
+      "label": "Example Tool",
+      "slideIndex": 5,
+      "linkType": "tool"
     }
   ],
   "tools": [

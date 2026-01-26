@@ -210,6 +210,8 @@ npm run dev    # Start dev server
 > Please check:
 > - Home page shows correct title, speaker info, and abstract
 > - Slides page renders all slides with images/videos
+> - **Press `v` to cycle between content/screenshot/outline views**
+> - **Press `d` to open grid view of all slides**
 > - Navigation works (arrows, keyboard)
 > - Resources page shows extracted entities
 > - Media Gallery displays images correctly
