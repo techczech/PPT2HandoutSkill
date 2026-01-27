@@ -1,24 +1,27 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { Presentation, Section, Slide, ContentBlock, ImageContent, VideoContent } from '../data/types';
 import presentationData from '../data/presentation.json';
-import entitiesData from '../data/entities.json';
 
-// Valid image categories
+// Valid image categories with colors
 const IMAGE_CATEGORIES = [
-  { value: 'all', label: 'All Categories' },
-  { value: 'interface_screenshot', label: 'Screenshots' },
-  { value: 'tweet', label: 'Tweets' },
-  { value: 'chat_screenshot', label: 'Chat' },
-  { value: 'chart', label: 'Charts' },
-  { value: 'diagram', label: 'Diagrams' },
-  { value: 'photo_person', label: 'Photos' },
-  { value: 'book_cover', label: 'Book Covers' },
-  { value: 'product_page', label: 'Product Pages' },
-  { value: 'academic_paper', label: 'Academic' },
-  { value: 'quote', label: 'Quotes' },
-  { value: 'cartoon', label: 'Cartoons' },
-  { value: 'other', label: 'Other' },
+  { value: 'all', label: 'All', color: '#64748b' },
+  { value: 'interface_screenshot', label: 'Screenshots', color: '#2563eb' },
+  { value: 'chat_screenshot', label: 'Chat', color: '#7c3aed' },
+  { value: 'tweet', label: 'Tweets', color: '#0ea5e9' },
+  { value: 'academic_paper', label: 'Academic', color: '#059669' },
+  { value: 'diagram', label: 'Diagrams', color: '#d97706' },
+  { value: 'chart', label: 'Charts', color: '#dc2626' },
+  { value: 'photo_person', label: 'People', color: '#db2777' },
+  { value: 'photo_scene', label: 'Scenes', color: '#65a30d' },
+  { value: 'book_cover', label: 'Books', color: '#8b5cf6' },
+  { value: 'product_page', label: 'Products', color: '#0891b2' },
+  { value: 'code_snippet', label: 'Code', color: '#475569' },
+  { value: 'infographic', label: 'Infographics', color: '#f59e0b' },
+  { value: 'quote_image', label: 'Quotes', color: '#6366f1' },
+  { value: 'cartoon', label: 'Cartoons', color: '#ec4899' },
+  { value: 'table', label: 'Tables', color: '#14b8a6' },
+  { value: 'other', label: 'Other', color: '#9ca3af' },
 ] as const;
 
 type CategoryFilter = typeof IMAGE_CATEGORIES[number]['value'];
@@ -28,24 +31,13 @@ interface MediaItem {
   src: string;
   alt?: string;
   caption?: string;
-  description?: string;  // AI-generated description from entities.json
-  category?: string;     // AI-generated category from entities.json
+  description?: string;
+  category?: string;
   title?: string;
   slideIndex: number;
   slideTitle: string;
   sectionTitle: string;
 }
-
-// Get AI-generated descriptions from entities.json
-interface EntityImage {
-  src: string;
-  description: string;
-  slideIndex: number;
-  containsQuote?: boolean;
-  category?: string;
-}
-
-const entityImages = (entitiesData.images || []) as EntityImage[];
 
 function extractMedia(content: ContentBlock): (ImageContent | VideoContent)[] {
   if (content.type === 'image') {
@@ -61,7 +53,7 @@ export default function MediaGalleryPage() {
   const presentation = presentationData as Presentation;
   const [filter, setFilter] = useState<'all' | 'images' | 'videos' | 'described'>('all');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
 
   // Extract all media from the presentation
   const allMedia = useMemo<MediaItem[]>(() => {
@@ -74,15 +66,13 @@ export default function MediaGalleryPage() {
           const mediaItems = extractMedia(content);
           mediaItems.forEach(media => {
             if (media.type === 'image') {
-              // Find AI-generated description from entities.json
-              const entityImage = entityImages.find(ei => ei.src === media.src);
               items.push({
                 type: 'image',
                 src: media.src,
                 alt: media.alt,
                 caption: media.caption,
-                description: entityImage?.description,
-                category: entityImage?.category,
+                description: media.description,
+                category: media.category,
                 slideIndex: globalIndex,
                 slideTitle: slide.title || 'Untitled slide',
                 sectionTitle: section.title,
@@ -122,11 +112,13 @@ export default function MediaGalleryPage() {
     return result;
   }, [allMedia, filter, categoryFilter]);
 
+  const selectedMedia = selectedIndex !== null ? filteredMedia[selectedIndex] : null;
+
   const imageCount = allMedia.filter(m => m.type === 'image').length;
   const videoCount = allMedia.filter(m => m.type === 'video').length;
   const describedCount = allMedia.filter(m => m.type === 'image' && m.description).length;
 
-  // Calculate category counts for images with descriptions
+  // Calculate category counts for images
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     allMedia.forEach(m => {
@@ -136,6 +128,50 @@ export default function MediaGalleryPage() {
     });
     return counts;
   }, [allMedia]);
+
+  // Keyboard navigation
+  const goToPrevious = useCallback(() => {
+    if (selectedIndex !== null && selectedIndex > 0) {
+      setSelectedIndex(selectedIndex - 1);
+    }
+  }, [selectedIndex]);
+
+  const goToNext = useCallback(() => {
+    if (selectedIndex !== null && selectedIndex < filteredMedia.length - 1) {
+      setSelectedIndex(selectedIndex + 1);
+    }
+  }, [selectedIndex, filteredMedia.length]);
+
+  const closeLightbox = useCallback(() => {
+    setSelectedIndex(null);
+  }, []);
+
+  // Handle keyboard events when lightbox is open
+  useEffect(() => {
+    if (selectedIndex === null) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      switch (e.key) {
+        case 'Escape':
+          closeLightbox();
+          break;
+        case 'ArrowLeft':
+          goToPrevious();
+          break;
+        case 'ArrowRight':
+          goToNext();
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedIndex, goToPrevious, goToNext, closeLightbox]);
+
+  // Get categories that have items
+  const activeCategories = IMAGE_CATEGORIES.filter(
+    cat => cat.value === 'all' || categoryCounts[cat.value] > 0
+  );
 
   return (
     <div className="page-container">
@@ -160,7 +196,7 @@ export default function MediaGalleryPage() {
 
       {/* Content */}
       <div className="page-content">
-        {/* Filter buttons */}
+        {/* Type filter buttons */}
         <div className="flex gap-2 flex-wrap items-center">
           <button
             onClick={() => setFilter('all')}
@@ -204,30 +240,45 @@ export default function MediaGalleryPage() {
           >
             Videos ({videoCount})
           </button>
-
-          {/* Category filter dropdown */}
-          {filter !== 'videos' && Object.keys(categoryCounts).length > 0 && (
-            <select
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value as CategoryFilter)}
-              className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {IMAGE_CATEGORIES.map(cat => {
-                const count = cat.value === 'all'
-                  ? Object.values(categoryCounts).reduce((a, b) => a + b, 0)
-                  : categoryCounts[cat.value] || 0;
-                if (cat.value === 'all' || count > 0) {
-                  return (
-                    <option key={cat.value} value={cat.value}>
-                      {cat.label} {count > 0 ? `(${count})` : ''}
-                    </option>
-                  );
-                }
-                return null;
-              })}
-            </select>
-          )}
         </div>
+
+        {/* Category pills */}
+        {filter !== 'videos' && Object.keys(categoryCounts).length > 0 && (
+          <div className="flex gap-2 flex-wrap">
+            {activeCategories.map(cat => {
+              const count = cat.value === 'all'
+                ? Object.values(categoryCounts).reduce((a, b) => a + b, 0)
+                : categoryCounts[cat.value] || 0;
+              const isActive = categoryFilter === cat.value;
+
+              return (
+                <button
+                  key={cat.value}
+                  onClick={() => setCategoryFilter(cat.value)}
+                  className={`
+                    flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium
+                    transition-all
+                    ${isActive ? 'text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200'}
+                  `}
+                  style={{
+                    backgroundColor: isActive ? cat.color : undefined,
+                    color: isActive ? 'white' : cat.color,
+                  }}
+                >
+                  <span>{cat.label}</span>
+                  <span
+                    className={`
+                      px-1.5 py-0.5 rounded-full text-xs
+                      ${isActive ? 'bg-white/20' : 'bg-gray-200'}
+                    `}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Media grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -235,7 +286,7 @@ export default function MediaGalleryPage() {
             <div
               key={index}
               className="group relative bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:ring-2 hover:ring-blue-500 transition-all"
-              onClick={() => setSelectedMedia(item)}
+              onClick={() => setSelectedIndex(index)}
             >
               {item.type === 'image' ? (
                 <img
@@ -279,15 +330,18 @@ export default function MediaGalleryPage() {
               </div>
               {/* Badges */}
               <div className="absolute top-2 right-2 flex gap-1">
-                {/* Small icon for images with AI description */}
                 {item.description && (
                   <div className="bg-blue-600/90 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full" title="Has AI description">
                     ✨
                   </div>
                 )}
-                {/* Category badge */}
                 {item.category && (
-                  <div className="bg-gray-800/80 text-white text-xs px-2 py-1 rounded-full">
+                  <div
+                    className="text-white text-xs px-2 py-1 rounded-full"
+                    style={{
+                      backgroundColor: IMAGE_CATEGORIES.find(c => c.value === item.category)?.color || '#6b7280'
+                    }}
+                  >
                     {IMAGE_CATEGORIES.find(c => c.value === item.category)?.label || item.category}
                   </div>
                 )}
@@ -304,20 +358,54 @@ export default function MediaGalleryPage() {
       </div>
 
       {/* Lightbox modal */}
-      {selectedMedia && (
+      {selectedMedia && selectedIndex !== null && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-          onClick={() => setSelectedMedia(null)}
+          onClick={closeLightbox}
         >
+          {/* Close button */}
           <button
-            className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
-            onClick={() => setSelectedMedia(null)}
+            className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors z-10"
+            onClick={closeLightbox}
+            title="Close (Esc)"
           >
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
 
+          {/* Previous button */}
+          {selectedIndex > 0 && (
+            <button
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); goToPrevious(); }}
+              title="Previous (←)"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Next button */}
+          {selectedIndex < filteredMedia.length - 1 && (
+            <button
+              className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-10"
+              onClick={(e) => { e.stopPropagation(); goToNext(); }}
+              title="Next (→)"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          )}
+
+          {/* Counter */}
+          <div className="absolute top-4 left-4 text-white/60 text-sm">
+            {selectedIndex + 1} / {filteredMedia.length}
+          </div>
+
+          {/* Media content */}
           <div
             className="max-w-4xl max-h-[80vh] flex flex-col"
             onClick={(e) => e.stopPropagation()}
@@ -332,6 +420,7 @@ export default function MediaGalleryPage() {
               <video
                 src={selectedMedia.src}
                 controls
+                autoPlay
                 className="max-w-full max-h-[70vh] rounded-lg"
               >
                 Your browser does not support video playback.
@@ -348,12 +437,28 @@ export default function MediaGalleryPage() {
                 <p className="text-white font-medium">{selectedMedia.slideTitle}</p>
               )}
               <p className="text-white/60 text-sm">{selectedMedia.sectionTitle}</p>
-              <Link
-                to={`/slides/${selectedMedia.slideIndex + 1}`}
-                className="inline-block mt-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
-              >
-                Go to slide {selectedMedia.slideIndex + 1}
-              </Link>
+              <div className="flex items-center justify-center gap-3 mt-3">
+                {selectedMedia.category && (
+                  <span
+                    className="text-white text-xs px-2 py-1 rounded-full"
+                    style={{
+                      backgroundColor: IMAGE_CATEGORIES.find(c => c.value === selectedMedia.category)?.color || '#6b7280'
+                    }}
+                  >
+                    {IMAGE_CATEGORIES.find(c => c.value === selectedMedia.category)?.label || selectedMedia.category}
+                  </span>
+                )}
+                <Link
+                  to={`/slides/${selectedMedia.slideIndex + 1}`}
+                  className="inline-block px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+                >
+                  Go to slide {selectedMedia.slideIndex + 1}
+                </Link>
+              </div>
+              {/* Keyboard hints */}
+              <p className="text-white/40 text-xs mt-4">
+                Use ← → to navigate · Esc to close
+              </p>
             </div>
           </div>
         </div>

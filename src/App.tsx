@@ -4,6 +4,7 @@ import SiteHeader from './components/layout/SiteHeader';
 import Footer from './components/layout/Footer';
 import HomePage from './pages/HomePage';
 import SlidesPage from './pages/SlidesPage';
+import GridPage from './pages/GridPage';
 import ResourcesPage from './pages/ResourcesPage';
 import MediaGalleryPage from './pages/MediaGalleryPage';
 import AboutPage from './pages/AboutPage';
@@ -42,6 +43,7 @@ function AppContent() {
           <Route path="/" element={<HomePage />} />
           <Route path="/slides" element={<SlidesPage />} />
           <Route path="/slides/:slideNumber" element={<SlidesPage />} />
+          <Route path="/grid" element={<GridPage />} />
           <Route path="/resources" element={<ResourcesPage />} />
           <Route path="/media-gallery" element={<MediaGalleryPage />} />
           <Route path="/about" element={<AboutPage />} />

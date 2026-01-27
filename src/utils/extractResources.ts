@@ -1,7 +1,5 @@
 import type {
   Presentation,
-  ContentBlock,
-  SmartArtNode,
   ImageContent,
   ExtractedResources,
   PersonResource,
@@ -19,77 +17,29 @@ import type {
 import entitiesData from '../data/entities.json';
 
 // ==========================================
-// URL Extraction (Keep mechanical for unambiguous URLs)
+// URL Extraction - AI-only approach
+// Links are extracted semantically by the AI during skill execution
+// and stored in entities.json. No mechanical regex extraction.
 // ==========================================
 
-const COMMON_TLDS = 'com|org|net|io|edu|gov|co|uk|de|fr|it|es|nl|be|ch|at|ai|dev|app|tech|info|biz';
-const URL_PATTERN = new RegExp(
-  `(?:https?:\\/\\/[^\\s)]+|www\\.[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}(?:\\/[^\\s)]*)?|[a-zA-Z0-9-]+\\.(?:${COMMON_TLDS})(?:\\/[^\\s)]*)?)`,
-  'gi'
-);
-const SHORTLINK_PATTERN = /(?:bit\.ly|linktr\.ee|tinyurl\.com|t\.co|goo\.gl|youtu\.be)\/[a-zA-Z0-9-_]+/gi;
-
-// ==========================================
-// Helper Functions
-// ==========================================
-
-function extractTextFromContent(content: ContentBlock[]): string[] {
-  const texts: string[] = [];
-
-  for (const block of content) {
-    switch (block.type) {
-      case 'heading':
-        texts.push(block.text);
-        break;
-      case 'list':
-        for (const item of block.items) {
-          texts.push(item.text);
-          if (item.children) {
-            for (const child of item.children) {
-              texts.push(child.text);
-              if (child.children) {
-                for (const grandchild of child.children) {
-                  texts.push(grandchild.text);
-                }
-              }
-            }
-          }
-        }
-        break;
-      case 'smart_art':
-        const extractNodes = (nodes: SmartArtNode[]) => {
-          for (const node of nodes) {
-            texts.push(node.text);
-            if (node.children) extractNodes(node.children);
-          }
-        };
-        extractNodes(block.nodes);
-        break;
-    }
-  }
-
-  return texts;
-}
 
 // ==========================================
 // Entities from entities.json
 // ==========================================
 
-interface EntityMention {
-  slideIndex: number;
-  context: string;
-}
-
+// Supports both old format (with mentions) and new format (direct fields)
 interface PersonEntity {
   name: string;
   role?: string;
-  mentions: EntityMention[];
+  slideIndex?: number;
+  mentions?: { slideIndex: number; context: string }[];
 }
 
 interface OrgEntity {
   name: string;
   type?: string;
-  mentions: EntityMention[];
+  description?: string;
+  mentions?: { slideIndex: number; context: string }[];
 }
 
 interface QuoteEntity {
@@ -97,13 +47,18 @@ interface QuoteEntity {
   attribution?: string;
   source?: string;
   slideIndex: number;
+  topic?: string;
+  extractedFromImage?: boolean;
 }
 
 interface ToolEntity {
   name: string;
   maker?: string;
   type?: string;
-  mentions: EntityMention[];
+  description?: string;
+  url?: string;
+  category?: string;
+  mentions?: { slideIndex: number; context: string }[];
 }
 
 interface TermEntity {
@@ -127,6 +82,14 @@ interface ImageEntity {
   quoteIndex?: number;
 }
 
+interface LinkEntity {
+  url: string;
+  title?: string;
+  description?: string;
+  slideIndex?: number;
+  linkType?: string;
+}
+
 interface EntitiesFile {
   people?: PersonEntity[];
   organizations?: OrgEntity[];
@@ -135,6 +98,7 @@ interface EntitiesFile {
   terms?: TermEntity[];
   dates?: DateEntity[];
   images?: ImageEntity[];
+  links?: LinkEntity[];
 }
 
 // ==========================================
@@ -146,34 +110,38 @@ export function extractResources(presentation: Presentation): ExtractedResources
   const entities = entitiesData as EntitiesFile;
 
   // Convert AI-extracted entities to the format expected by the UI
+  // Supports both old format (with mentions) and new format (direct fields)
 
   // People
   const people: PersonResource[] = (entities.people || []).map(p => ({
     name: p.name,
     role: p.role,
-    slideIndex: p.mentions[0]?.slideIndex ?? 0,
-    context: p.mentions[0]?.context ?? '',
+    slideIndex: p.slideIndex ?? p.mentions?.[0]?.slideIndex ?? 0,
+    context: p.role || p.mentions?.[0]?.context || '',
   }));
 
   // Organizations
   const organizations: OrganizationResource[] = (entities.organizations || []).map(o => ({
     name: o.name,
-    slideIndex: o.mentions[0]?.slideIndex ?? 0,
-    context: o.mentions[0]?.context ?? '',
+    slideIndex: o.mentions?.[0]?.slideIndex ?? 0,
+    context: o.description || o.mentions?.[0]?.context || '',
   }));
 
-  // Quotes
+  // Quotes (with topic support)
   const quotes: QuoteResource[] = (entities.quotes || []).map(q => ({
     text: q.text,
     attribution: q.attribution,
     slideIndex: q.slideIndex,
-    slideTitle: q.source || '',
+    slideTitle: q.attribution || q.source || '',
+    topic: q.topic,
+    extractedFromImage: q.extractedFromImage,
   }));
 
   // Tools
   const tools: ToolResource[] = (entities.tools || []).map(t => ({
     name: t.name,
-    description: `${t.type || 'AI Tool'}${t.maker ? ` by ${t.maker}` : ''}`,
+    description: t.description || t.category || `${t.type || 'AI Tool'}${t.maker ? ` by ${t.maker}` : ''}`,
+    url: t.url,
   }));
 
   // Terms
@@ -220,36 +188,18 @@ export function extractResources(presentation: Presentation): ExtractedResources
     }
   }
 
-  // Links - Extract mechanically (URLs are unambiguous)
-  const foundLinks = new Map<string, LinkResource>();
-  globalSlideIndex = 0;
-
-  for (const section of presentation.sections) {
-    for (const slide of section.slides) {
-      const slideIndex = globalSlideIndex++;
-      const slideTexts = [slide.title, slide.notes, ...extractTextFromContent(slide.content)];
-      const slideText = slideTexts.join(' ');
-
-      const urlMatches = slideText.match(URL_PATTERN) || [];
-      const shortlinkMatches = slideText.match(SHORTLINK_PATTERN) || [];
-
-      for (const url of [...urlMatches, ...shortlinkMatches]) {
-        const cleanUrl = url.startsWith('http') ? url : `https://${url}`;
-        const domain = url.replace(/^https?:\/\//, '').split('/')[0];
-
-        // Skip common non-resource URLs
-        if (domain.includes('example.com') || domain.includes('localhost')) continue;
-
-        if (!foundLinks.has(cleanUrl.toLowerCase())) {
-          foundLinks.set(cleanUrl.toLowerCase(), {
-            url: cleanUrl,
-            label: domain,
-            slideIndex,
-          });
-        }
-      }
-    }
-  }
+  // Links - Read ONLY from entities.json (AI-extracted with semantic understanding)
+  // No mechanical regex extraction - links must be curated by AI during skill execution
+  const links: LinkResource[] = (entities.links || []).map(link => {
+    const cleanUrl = link.url.startsWith('http') ? link.url : `https://${link.url}`;
+    return {
+      url: cleanUrl,
+      label: link.title || link.url.replace(/^https?:\/\//, '').split('/')[0],
+      description: link.description,
+      slideIndex: link.slideIndex,
+      linkType: link.linkType,
+    };
+  });
 
   // Places - Not currently in entities.json, leave empty for now
   const places: PlaceResource[] = [];
@@ -263,6 +213,6 @@ export function extractResources(presentation: Presentation): ExtractedResources
     images,
     tools,
     terms,
-    links: Array.from(foundLinks.values()),
+    links,
   };
 }

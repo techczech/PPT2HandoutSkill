@@ -43,10 +43,13 @@ For images, provide a rich description including:
 - Identify key technical terms used
 - Include brief definitions
 
-### Links
-- Extract all URLs from slide content and notes
+### Links (AI-Extracted, Semantic)
+**IMPORTANT:** Links are NOT extracted via regex. The AI must read and understand each slide to:
+- Identify meaningful URLs contextually (not just pattern-matched strings)
+- Reconstruct split URLs that may span multiple lines in presentations
+- Provide human-readable titles and descriptions explaining what the link offers
 - Classify each link by type (see Link Types below)
-- Reconstruct split URLs that may span multiple lines
+- Only include links that are useful to the presentation's audience
 
 ## Link Types
 
@@ -89,39 +92,39 @@ Assign one of these categories to each image:
     {
       "name": "Person Name",
       "role": "Role or affiliation",
-      "mentions": [
-        { "slideIndex": 6, "context": "Slide title mentions them" }
-      ]
+      "slideIndex": 6
     }
   ],
   "organizations": [
     {
       "name": "Organization Name",
-      "context": "Why mentioned"
+      "description": "Brief description or context"
     }
   ],
   "quotes": [
     {
       "text": "The actual quote text...",
-      "attribution": "Person Name",
-      "source": "Tweet, November 30, 2022",
+      "attribution": "Person Name, Source Title",
       "slideIndex": 9,
-      "extractedFromImage": true,
-      "topic": "ai_technology"
+      "topic": "ai_technology",
+      "extractedFromImage": true
     }
   ],
   "links": [
     {
-      "url": "https://example.com/tool",
-      "label": "Example Tool",
+      "url": "https://example.com/article",
+      "title": "Article Title",
+      "description": "Brief description of what the link contains",
       "slideIndex": 5,
-      "linkType": "tool"
+      "linkType": "article"
     }
   ],
   "tools": [
     {
       "name": "Tool Name",
-      "context": "Why mentioned"
+      "description": "What the tool does",
+      "url": "https://tool-url.com",
+      "category": "chatbot"
     }
   ],
   "terms": [
@@ -133,7 +136,8 @@ Assign one of these categories to each image:
   "dates": [
     {
       "date": "November 30, 2022",
-      "event": "What happened"
+      "event": "What happened",
+      "slideIndex": 5
     }
   ],
   "images": [
@@ -148,4 +152,34 @@ Assign one of these categories to each image:
 }
 ```
 
-The Resources page reads from this file instead of using regex patterns.
+## Quote Topics
+
+Use these topic tags to categorize quotes for filtering:
+
+| Topic | Description |
+|-------|-------------|
+| `ai_technology` | General AI/tech quotes |
+| `ai_limitations` | AI errors, hallucinations, benchmarks |
+| `ai_ethics` | Ethics, labor, environmental concerns |
+| `ai_future` | Predictions, future capabilities |
+| `learning` | Education, skill development |
+| `human_error` | Human mistakes, cognitive biases |
+| `computing_history` | Historical perspectives on computing |
+
+## Tool Categories
+
+Categorize tools by their primary function:
+
+| Category | Description |
+|----------|-------------|
+| `chatbot` | Conversational AI interfaces (ChatGPT, Claude, Gemini) |
+| `research` | Academic/research tools (Elicit, Consensus, NotebookLM) |
+| `development` | Code editors, app builders (Cursor, Loveable) |
+| `productivity` | Note-taking, workflow tools (Notion, Microsoft 365) |
+
+## Important Notes
+
+- The Resources page reads entities ONLY from this file
+- No mechanical regex extraction is used - all entities must be AI-extracted
+- Links especially require semantic understanding, not pattern matching
+- Ensure all URLs are complete, validated, and have meaningful descriptions

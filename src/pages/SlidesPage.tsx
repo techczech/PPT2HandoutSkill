@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import { NavigationProvider } from '../hooks/useNavigation';
+import { SlideViewModeProvider } from '../hooks/useSlideViewMode';
 import SectionSidebar from '../components/layout/SectionSidebar';
 import SlideViewContent from '../components/layout/SlideViewContent';
 
@@ -14,7 +15,9 @@ export default function SlidesPage() {
 
   return (
     <NavigationProvider>
-      <SlidesPageContent />
+      <SlideViewModeProvider>
+        <SlidesPageContent />
+      </SlideViewModeProvider>
     </NavigationProvider>
   );
 }

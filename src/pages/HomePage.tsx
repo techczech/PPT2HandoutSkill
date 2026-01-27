@@ -84,7 +84,7 @@ export default function HomePage() {
               >
                 <div className="w-14 h-14 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--color-accent)', color: 'white' }}>
                   <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                   </svg>
                 </div>
                 <div className="flex-1">
@@ -124,10 +124,29 @@ export default function HomePage() {
             )}
           </div>
 
-          {/* Key Topics (if available) */}
+          {/* Abstract - Prominent placement */}
+          {sessionInfo.abstract && (
+            <div className="card" style={{ borderLeft: '4px solid var(--color-accent)' }}>
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <svg className="w-5 h-5" style={{ color: 'var(--color-accent)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                About This {sessionInfo.event?.type || 'Presentation'}
+              </h2>
+              <div className="space-y-4" style={{ maxWidth: 'var(--max-content-width)' }}>
+                {sessionInfo.abstract.split('\n\n').map((paragraph, index) => (
+                  <p key={index} style={{ color: 'var(--color-text)', lineHeight: '1.7' }}>
+                    {paragraph}
+                  </p>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Key Topics - Prominent placement */}
           {hasKeyTopics && (
-            <div>
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
+            <div className="card">
+              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
                 <svg className="w-5 h-5" style={{ color: 'var(--color-accent)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
@@ -135,7 +154,7 @@ export default function HomePage() {
               </h2>
               <ul className="bullet-list space-y-3">
                 {sessionInfo.keyTopics.map((topic, index) => (
-                  <li key={index} className="bullet-item" style={{ color: 'var(--color-text)' }}>
+                  <li key={index} className="bullet-item" style={{ color: 'var(--color-text)', fontSize: '1.05rem' }}>
                     {topic}
                   </li>
                 ))}
@@ -176,72 +195,138 @@ export default function HomePage() {
             </div>
           )}
 
-          {/* Resources from presentation (if available) */}
-          {hasResources && (
-            <div>
-              <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-                <svg className="w-5 h-5" style={{ color: 'var(--color-primary)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          {/* Index Preview - Show examples from extracted resources */}
+          <div className="card">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <svg className="w-5 h-5" style={{ color: 'var(--color-accent)' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                Resources Mentioned
+                Index & Glossary Preview
               </h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                {resources.tools.slice(0, 9).map((tool) => (
-                  <div key={tool.name} className="resource-card">
-                    <h3 className="font-medium text-sm" style={{ color: 'var(--color-primary)' }}>{tool.name}</h3>
-                    {tool.description && (
-                      <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
-                        {tool.description}
-                      </p>
-                    )}
+              <Link
+                to="/resources"
+                className="text-sm font-medium inline-flex items-center gap-1"
+                style={{ color: 'var(--color-accent)' }}
+              >
+                View Full Index
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* People */}
+              {resources.people && resources.people.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                    People Mentioned ({resources.people.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {resources.people.slice(0, 3).map((person, index) => (
+                      <div key={index} className="flex items-start gap-2">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold" style={{ background: 'var(--color-primary)', color: 'white' }}>
+                          {person.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{person.name}</p>
+                          {person.role && (
+                            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{person.role}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-              {resources.tools.length > 9 && (
-                <div className="mt-4">
-                  <Link
-                    to="/resources"
-                    className="inline-flex items-center gap-2 text-sm font-medium"
-                    style={{ color: 'var(--color-accent)' }}
-                  >
-                    View all {resources.tools.length} resources
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </Link>
+                </div>
+              )}
+
+              {/* Quotes */}
+              {resources.quotes && resources.quotes.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                    Key Quotes ({resources.quotes.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {resources.quotes.slice(0, 2).map((quote, index) => (
+                      <div key={index} className="pl-3" style={{ borderLeft: '3px solid var(--color-accent)' }}>
+                        <p className="text-sm italic" style={{ color: 'var(--color-text)' }}>"{quote.text.slice(0, 100)}{quote.text.length > 100 ? '...' : ''}"</p>
+                        {quote.attribution && (
+                          <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>— {quote.attribution}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Tools & Technologies */}
+              {hasResources && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                    Tools & Technologies ({resources.tools.length})
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {resources.tools.slice(0, 6).map((tool, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 rounded-full text-xs font-medium"
+                        style={{ background: 'var(--color-surface)', color: 'var(--color-primary)', border: '1px solid var(--color-border)' }}
+                      >
+                        {tool.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Key Terms */}
+              {resources.terms && resources.terms.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                    Key Terms ({resources.terms.length})
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {resources.terms.slice(0, 6).map((term, index) => (
+                      <span
+                        key={index}
+                        className="px-3 py-1 rounded-full text-xs font-medium"
+                        style={{ background: 'var(--color-accent)', color: 'white' }}
+                      >
+                        {term.term}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Dates */}
+              {resources.dates && resources.dates.length > 0 && (
+                <div className="md:col-span-2">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                    Important Dates ({resources.dates.length})
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {resources.dates.slice(0, 3).map((date, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'var(--color-primary)', color: 'white' }}>
+                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm" style={{ color: 'var(--color-text)' }}>{date.formatted}</p>
+                          {date.context && (
+                            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{date.context.slice(0, 40)}{date.context.length > 40 ? '...' : ''}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          )}
-
-          {/* Collapsible About Section */}
-          {sessionInfo.abstract && (
-            <details className="card group">
-              <summary className="cursor-pointer list-none flex items-center justify-between">
-                <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-muted)' }}>
-                  About This {sessionInfo.event?.type || 'Presentation'}
-                </h2>
-                <svg
-                  className="w-5 h-5 transition-transform group-open:rotate-180"
-                  style={{ color: 'var(--color-text-muted)' }}
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </summary>
-              <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
-                <div className="space-y-5" style={{ maxWidth: 'var(--max-content-width)' }}>
-                  {sessionInfo.abstract.split('\n\n').map((paragraph, index) => (
-                    <p key={index} className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
-                      {paragraph}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            </details>
-          )}
+          </div>
 
           {/* Session Details (only show if there's meaningful event info) */}
           {(hasEventName || sessionDetails) && (

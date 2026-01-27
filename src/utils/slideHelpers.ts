@@ -31,8 +31,19 @@ export function getSectionBounds(sections: Section[]): { start: number; end: num
   return bounds;
 }
 
-export function getLayoutCategory(layout: string): 'title' | 'section' | 'sidebar' | 'media' | 'quote' | 'content' {
+export function getLayoutCategory(layout: string, slideTitle?: string): 'title' | 'section' | 'sidebar' | 'media' | 'quote' | 'final' | 'license' | 'content' {
   const lowerLayout = layout.toLowerCase();
+  const lowerTitle = (slideTitle || '').toLowerCase();
+
+  // Special case: licensing slide (detect by title content)
+  if (lowerTitle.includes('creative commons') || lowerTitle.includes('licensed under')) {
+    return 'license';
+  }
+
+  // Special case: final/thank you slide
+  if (lowerLayout.includes('final') || lowerTitle === 'thank you') {
+    return 'final';
+  }
 
   if (lowerLayout.includes('section heading')) {
     return 'section';
@@ -40,7 +51,7 @@ export function getLayoutCategory(layout: string): 'title' | 'section' | 'sideba
   if (lowerLayout.includes('title slide') || lowerLayout === 'title only (for single text lines)' || lowerLayout === 'title only') {
     return 'title';
   }
-  if (lowerLayout.includes('sidebar') || lowerLayout.includes('side bar') || lowerLayout === 'half page title') {
+  if (lowerLayout.includes('sidebar') || lowerLayout.includes('side bar') || lowerLayout.includes('half page') || lowerLayout === 'two content') {
     return 'sidebar';
   }
   if (lowerLayout.includes('image') || lowerLayout.includes('screenshot') || lowerLayout.includes('video')) {

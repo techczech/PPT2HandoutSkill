@@ -26,6 +26,11 @@ Create `src/data/sessionInfo.ts`:
 export const sessionInfo = {
   title: "My Workshop Title",
   subtitle: "A subtitle for the presentation",
+
+  // Link to talk/presentation page (optional)
+  talkPageUrl: "https://example.com/workshop",
+  talkPageLabel: "Workshop Page", // e.g., "Talk Page", "Webinar Recording"
+
   speaker: {
     name: "Jane Doe",
     affiliation: "University of Example",
@@ -33,20 +38,49 @@ export const sessionInfo = {
     links: { website: "https://janedoe.com" },
     bio: "Jane is a researcher in..."
   },
+
   event: {
-    name: "Conference 2026",
+    name: "Conference 2026",  // Leave empty if standalone presentation
     date: "January 15, 2026",
     time: "14:00 - 15:30",
     location: "Room 101",
-    type: "Workshop",
+    type: "Workshop",  // Workshop, Talk, Seminar, Webinar
     sessionLink: "https://conference.com/session/123"
   },
-  abstract: "This workshop covers...",
-  exampleApps: [
-    { name: "Demo App", url: "https://demo.app", description: "Example" }
-  ]
+
+  // Multi-paragraph abstract (use \n\n for paragraph breaks)
+  // Displayed prominently on home page
+  abstract: `This workshop covers AI fundamentals and practical applications.
+
+Participants will gain hands-on experience with modern AI tools and learn to apply them in their research workflow.`,
+
+  // Key topics - displayed as bullet points on home page
+  keyTopics: [
+    "AI foundations and capabilities",
+    "Practical applications for research",
+    "Building custom AI workflows",
+  ],
+
+  // Featured links - prominent resource links on home page
+  featuredLinks: {
+    title: "Tools Used",  // e.g., "Related Resources", "Example Apps"
+    items: [
+      { name: "Tool Name", url: "https://tool.example", description: "What it does" },
+    ],
+  },
 };
 ```
+
+### Homepage Structure
+
+The homepage automatically displays:
+1. **Hero** - Title, subtitle, speaker info
+2. **CTA Cards** - Browse Slides + Talk Page (or Presenter Website)
+3. **Abstract** - Prominently displayed (not collapsed)
+4. **Key Topics** - Bullet list in a card
+5. **Featured Links** - Grid of resource cards
+6. **Index Preview** - Shows people, quotes, tools, terms, dates from entities.json
+7. **Session Details** - Event info at bottom
 
 ## File Structure
 

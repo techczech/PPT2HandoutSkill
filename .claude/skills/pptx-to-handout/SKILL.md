@@ -102,19 +102,37 @@ Create `src/data/entities.json` with extracted entities from your Step 3 analysi
 **See [references/entities-format.md](references/entities-format.md) for the full schema.**
 
 Entity types to extract:
-- **people** - Names mentioned, their roles, which slides reference them
-- **quotes** - Attributed statements with source info
-- **organizations** - Companies, institutions mentioned
-- **tools** - Software, AI tools, products discussed
-- **terms** - Technical terms with brief definitions
-- **dates** - Significant dates and what happened
-- **images** - Descriptions and categories for each image
 
-**CRITICAL - URL Extraction:**
-- URLs often split across lines in presentations
-- ALWAYS reconstruct complete URLs from context
-- VALIDATE each URL makes semantic sense
-- If uncertain, ask the user to confirm
+- **people** - Names mentioned with their roles and slideIndex
+- **quotes** - Attributed statements with:
+  - `attribution` - Who said it and source
+  - `topic` - Category tag (ai_technology, learning, ai_ethics, etc.)
+  - `extractedFromImage` - true if quote was in an image
+- **organizations** - Companies, institutions with descriptions
+- **tools** - Software, AI tools with:
+  - `description` - What the tool does
+  - `url` - Link to the tool (if available)
+  - `category` - chatbot, research, development, productivity
+- **terms** - Technical terms with definitions
+- **dates** - Significant dates with events and slideIndex
+- **links** - URLs with:
+  - `title` - Human-readable link title
+  - `description` - What the link contains
+  - `linkType` - tool, demo, article, documentation, research, personal, website
+
+**CRITICAL - URL/Link Extraction (AI-Only, Semantic Approach):**
+
+Links are NOT extracted mechanically via regex. The AI must:
+1. **Read and understand** each slide's content contextually
+2. **Identify meaningful URLs** - not just strings that look like URLs
+3. **Reconstruct fragmented URLs** - presentations often split URLs across lines
+4. **Provide semantic descriptions** - explain what the link leads to
+5. **Classify by type** - tool, demo, article, documentation, research, personal, website
+6. **Validate purpose** - only include links relevant to the presentation topic
+
+DO NOT rely on pattern matching. READ the slides, understand the context, and extract links that would be useful to the audience.
+
+If uncertain about a URL, ask the user to confirm.
 
 ### Step 5b: AI Image Categorization (Optional)
 
@@ -174,10 +192,14 @@ For automatic processing without review:
 python scripts/analyze-existing-images.py .
 
 # Or with specific backend/model
-python scripts/analyze-existing-images.py . --backend lmstudio --model "llava-v1.6-mistral"
+python scripts/analyze-existing-images.py . --backend lmstudio --model "qwen/qwen3-vl-4b"
 python scripts/analyze-existing-images.py . --backend ollama --model "llava:13b"
 python scripts/analyze-existing-images.py . --backend gemini
 ```
+
+**Recommended LM Studio models:**
+- `qwen/qwen3-vl-4b` - Fast, good quality for most images (recommended)
+- `llava-v1.6-mistral` - Alternative if Qwen unavailable
 
 The script updates `src/data/presentation.json` with image descriptions, categories, and extracted quotes.
 
@@ -189,9 +211,33 @@ python scripts/analyze-existing-images.py .  # Batch processing
 
 ### Step 6: Generate sessionInfo.ts
 
-Create `src/data/sessionInfo.ts` using:
-- Information detected in Step 3
-- User answers from Step 4
+Create `src/data/sessionInfo.ts` using information from Step 3 analysis and Step 4 user answers.
+
+**Key fields to populate for a good homepage:**
+
+1. **Required fields:**
+   - `title` - Presentation title
+   - `subtitle` - Brief tagline or event context
+   - `speaker.name`, `speaker.affiliation`, `speaker.email`
+
+2. **Abstract (highly recommended):**
+   - Write a compelling 2-4 paragraph abstract based on the presentation content
+   - Use `\n\n` for paragraph breaks
+   - This is displayed prominently on the homepage (NOT collapsed)
+
+3. **Key Topics (recommended):**
+   - Extract 4-8 key topics from the presentation
+   - Write as actionable bullet points
+   - Displayed as a bullet list on the homepage
+
+4. **Featured Links (optional but valuable):**
+   - Include 2-4 key tools or resources mentioned prominently in the presentation
+   - Give each a descriptive name and brief description
+   - These appear as clickable cards on the homepage
+
+5. **Talk Page Link (optional):**
+   - If there's a booking page, event page, or talk recording, add to `talkPageUrl`
+   - Set `talkPageLabel` to something like "Book this workshop" or "Watch Recording"
 
 **See [references/customization.md](references/customization.md) for the full format.**
 

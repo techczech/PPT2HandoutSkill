@@ -7,87 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **ResourcesPage.tsx** - Author filter in Quotes section changed from buttons to dropdown
+  - Cleaner UI when there are many quote authors
+  - Shows "All Authors (X)" with count
+  - Consistent with other dropdown filters in the app
+
 ### Added
 - **categorize-from-descriptions.py** - New script for local image categorization
   - Uses keyword matching on existing descriptions
   - No API calls required - runs entirely locally
   - Useful when descriptions exist but categories are missing
   - Pattern-based detection for 12 categories
-- **categorize-presentation-images.py** - Alternative local categorization script
-  - Categorizes images based on existing descriptions
-  - Keyword matching for all 12 image categories
-  - No API costs - pure local processing
-  - Useful fallback when API analysis is unavailable
-- **HomePage Index & Glossary Preview** - New section showing resource examples
-  - Displays sample people, quotes, tools, terms, and dates
-  - Links to full Resources page
-  - Improves discoverability of extracted entities
-- **Keyboard shortcut 'A' for About page** - Navigate to About page from anywhere
-  - Press 'A' key to jump to About page
-  - Added to keyboard shortcuts modal documentation
-  - Consistent with other navigation shortcuts (h, s, i, m)
-- **GitHub replication link on About page** - Makes skill discoverable
-  - Prominent "Replicate This Process" section with GitHub button
-  - Links to https://github.com/techczech/PPT2HandoutSkill
-  - Encourages open source replication
-  - Shows actual presentation stats (slides, images)
 
 ### Changed
-- **analyze-existing-images.py** - Updated to use Gemini 3 Flash Preview
-  - Switched from deprecated `google.generativeai` to `google-genai` package
-  - Uses `gemini-3-flash-preview` model (NOT gemini-2.0)
-  - Updated API calls to match new package structure
-  - Improved error handling and token tracking
-- **processMedia.js** - Now preserves AI-generated category field
-  - Added `category` to preserved image fields during build
-  - Prevents category data loss during media processing
-  - Categories now persist from analysis through to deployment
-- **MediaGalleryPage.tsx** improvements
-  - Reads descriptions and categories directly from presentation.json
-  - Removed unnecessary entities.json lookup for image metadata
-  - Fixed TypeScript errors with unused imports
+- **MediaGalleryPage.tsx** filter improvements
   - Removed "Key Images" section
   - Added "With Description" filter button
   - Changed large key badge to small ✨ icon for images with descriptions
   - Category badge now shown separately alongside description icon
-- **HomePage.tsx** - Redesigned for better content hierarchy
-  - Abstract now prominent at top with accent-colored border
-  - Key topics displayed in larger, more visible card
-  - New Index & Glossary Preview section replaces Resources section
-  - Shows examples from extracted entities with "View Full Index" link
-  - Session details moved to bottom for cleaner layout
-- **AboutPage.tsx** - Enhanced with replication info and accurate stats
-  - Shows actual image counts from presentation data (not incremental stats)
-  - Displays tokens used from processingStats.json
-  - Counts images with descriptions/categories dynamically
-  - Shows unique categories with individual counts
-  - Links directly to PPT2HandoutSkill GitHub repo
-  - "Replicate This Process" section encourages open source adoption
-- **Skill documentation** extensively updated
-  - **User Interaction Philosophy** section added
-    - "ASK, don't assume" - confirm before significant decisions
-    - "Show, then ask" - present results before proceeding
-    - "Never deploy without explicit user approval"
-    - Regular check-ins after major steps
-  - **Critical URL Extraction Guidance** added
-    - Warning about URLs split across lines in presentations
-    - Semantic understanding required (not regex-based extraction)
-    - URL validation requirements before adding to entities
-    - Examples of common URL splitting issues
-  - **Gemini 3 Flash Preview Requirements** emphasized
-    - MUST use `gemini-3-flash-preview` model
-    - Use `google-genai` package (not `google.generativeai`)
-    - Never use Gemini 2.0 models for this task
+- **Skill documentation** updated
   - Added documentation for both image analysis scripts
   - Updated entities.json format with category field
   - Added processingStats.json to file structure
-
-### Fixed
-- **Image categories not visible** - MediaGalleryPage now correctly reads from presentation.json
-- **URL splitting issues** - Skill now emphasizes semantic extraction over regex
-  - Prevents false URLs like "ac.uk" from "user@example.ac.uk"
-  - Prevents domain splits like "ltvibes.tech" + "czech.net" from "ltvibes.techczech.net"
-- **Wrong Gemini model usage** - Documentation now clearly requires Gemini 3 Flash Preview
 
 ## [1.3.0] - 2026-01-15
 
@@ -236,3 +178,628 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [1.2.0]: https://github.com/techczech/PPT2HandoutSkill/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/techczech/PPT2HandoutSkill/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/techczech/PPT2HandoutSkill/releases/tag/v1.0.0
+
+## Slide Rendering Improvements (2026-01-26)
+
+### Shape Rendering Support (NEW)
+Added support for rendering PowerPoint shapes in slides.
+
+**New files:**
+- `src/components/content/ShapeBlock.tsx` - Renders various shape types as SVG
+- `src/data/types.ts` - Added `ShapeContent` type
+
+**Supported shapes:**
+- `math_not_equal` - ≠ symbol (red by default)
+- `equal` - = symbol
+- `plus/add` - + symbol
+- `minus/subtract` - - symbol
+- `multiply/times` - × symbol
+- `divide` - ÷ symbol
+- `arrow_right` - → symbol
+- `check/checkmark` - ✓ symbol
+
+**Usage in slides:**
+- SidebarSlide: SmartArt + shape = three-zone layout (title | shape | smartart)
+- Example: Slide 45 "Large Language Models" with ≠ symbol
+
+**Data structure (TypeScript):**
+```typescript
+interface ShapeContent {
+  type: 'shape';
+  shape_type: string;      // e.g., "math_not_equal (168)"
+  shape_name: string;      // e.g., "Not Equal 2"
+  position: { left, top, width, height };
+  fill_color: string;      // e.g., "C00000" (red)
+}
+```
+
+**EXTRACTION REQUIREMENT (Python):**
+The PPTX extraction script must extract shapes with auto shape types. Example Python code:
+```python
+from pptx.enum.shapes import MSO_SHAPE_TYPE
+
+for shape in slide.shapes:
+    if shape.shape_type == MSO_SHAPE_TYPE.AUTO_SHAPE:
+        content.append({
+            "type": "shape",
+            "shape_type": f"{shape.auto_shape_type.name} ({shape.auto_shape_type.value})",
+            "shape_name": shape.name,
+            "position": {
+                "left": shape.left,
+                "top": shape.top,
+                "width": shape.width,
+                "height": shape.height
+            },
+            "fill_color": shape.fill.fore_color.rgb if shape.fill.type else None
+        })
+```
+
+Key shape types to extract:
+- `MATH_NOT_EQUAL` (168) - ≠ symbol
+- `MATH_EQUAL` (167) - = symbol
+- `MATH_PLUS` (163) - + symbol
+- `MATH_MINUS` (164) - - symbol
+- `MATH_MULTIPLY` (165) - × symbol
+- `MATH_DIVIDE` (166) - ÷ symbol
+- `RIGHT_ARROW` (33) - → arrow
+- `CHECK_MARK` (??? ) - ✓ checkmark
+
+### Text Run Formatting (FIX)
+Fixed bullet list items not rendering bold/colored text from `runs` array.
+
+**Problem:** BulletList used `item.text` but ignored `item.runs` which contains formatting.
+
+**Solution:** Added `FormattedText` component that renders runs with styles:
+```tsx
+function FormattedText({ runs, fallbackText }) {
+  if (!runs || runs.length === 0) {
+    return <LinkifiedText text={fallbackText} />;
+  }
+  return (
+    <>
+      {runs.map((run, index) => (
+        <span
+          key={index}
+          className={run.bold ? 'font-bold' : ''}
+          style={{ color: run.font_color ? `#${run.font_color}` : undefined }}
+        >
+          {run.text}
+        </span>
+      ))}
+    </>
+  );
+}
+```
+
+**Example:** Slides 221, 232 (Winograd Schema) now show colored/bold text correctly.
+
+**EXTRACTION REQUIREMENT (Python):**
+The PPTX extraction script must extract text runs with formatting. Example Python code:
+```python
+def extract_runs(paragraph):
+    """Extract text runs with formatting from a paragraph."""
+    runs = []
+    for run in paragraph.runs:
+        run_data = {"text": run.text}
+
+        # Check for bold
+        if run.font.bold:
+            run_data["bold"] = True
+
+        # Check for italic
+        if run.font.italic:
+            run_data["italic"] = True
+
+        # Check for font color
+        if run.font.color and run.font.color.rgb:
+            run_data["font_color"] = str(run.font.color.rgb)  # e.g., "C00000"
+
+        # Check for font size
+        if run.font.size:
+            run_data["font_size"] = run.font.size.pt
+
+        runs.append(run_data)
+    return runs
+
+# In list item extraction:
+item_data = {
+    "text": paragraph.text,  # Plain text fallback
+    "level": paragraph.level,
+    "runs": extract_runs(paragraph),  # Formatted runs
+    "children": []
+}
+```
+
+**Data structure (TypeScript):**
+```typescript
+interface TextRun {
+  text: string;
+  bold?: boolean;
+  italic?: boolean;
+  font_color?: string;  // Hex color without # (e.g., "C00000")
+  font_size?: number;   // Points
+}
+
+interface ListItem {
+  text: string;         // Plain text (fallback)
+  level: number;
+  runs?: TextRun[];     // Formatted text runs (optional)
+  children: ListItem[];
+}
+```
+
+## SmartArt Improvements (2026-01-25)
+
+### Icon Color Fix (2026-01-26)
+Removed CSS filter that was converting all SmartArt icons to monochrome dark blue.
+
+**Problem:** Icons were rendered with a filter that destroyed original colors:
+```css
+filter: brightness(0) saturate(100%) invert(15%) sepia(50%) saturate(1000%) hue-rotate(180deg)
+```
+
+**Solution:** Removed the filter so logo images (ChatGPT, Perplexity, Consensus, etc.) display in their original colors.
+
+**Affected layouts:**
+- `GroupedCardNode` (Icon Vertical Solid List) - e.g., slide 86 "Deep Research"
+- `HorizontalIconDiagram` (Icon Label Description List)
+- `StatsDisplayDiagram` (stats/metrics layouts)
+
+**Before:** Generic dark blue circles/squares
+**After:** Actual product logos in full color
+
+### Gray Background for Vertical List Cards
+- Changed `GroupedCardNode` background from dark blue to gray (`#e5e7eb`)
+- Text now uses dark blue (`var(--color-primary)`) instead of white
+- Icons adjusted to show dark blue instead of light
+
+### Horizontal Icon Layout (NEW)
+- Added `HorizontalIconDiagram` component for layouts:
+  - Icon Label Description List
+  - Icon Label List  
+  - Icon Circle Label List
+  - Centered Icon Label Description List
+- Renders icons horizontally with large responsive sizing:
+  - Icons: 5rem → 8rem
+  - Titles: xl → 3xl
+  - Descriptions: base → xl
+- Example: Slide 47 "Difference between AI in various disciplines"
+
+### Screenshot Path Fix
+- Fixed screenshot path from `/assets/screenshots/` to `/assets/images/slides/`
+
+### Horizontal Comparison Layout (NEW)
+- Added `HorizontalComparisonDiagram` for "Horizontal Action List" layouts
+- Renders side-by-side comparison cards with:
+  - Large centered titles (2xl → 4xl)
+  - Centered description text (lg → 2xl)
+  - Gray card backgrounds
+- Example: Slide 194 "Key distinction" (Humans vs Language Model)
+
+### Horizontal Timeline Layout (NEW)
+- Added `HorizontalTimeline` for empty layouts with time keywords
+- Auto-detects: today, soon, long term, now, future, etc.
+- Sorts nodes chronologically (today → soon → long term)
+- Renders with:
+  - Horizontal connector line with circle markers
+  - Phase labels above the line
+  - Content cards below with bullet children
+- Example: Slide 341 "What to expect"
+
+### Ascending Arrow Layout (Pyramid/Growth) (NEW)
+- Added `PyramidDiagram` for empty layouts with level keywords
+- Auto-detects: low, medium, high, basic, intermediate, advanced, tier, level
+- Sorts nodes: low/basic first → high/advanced last
+
+**Visual Design:**
+- Three columns side by side with ascending vertical positions
+- Dark blue circles above each column (progressively higher)
+- Bold titles with bullet children below
+- Gray widening wedge/arrow at the bottom
+
+**Implementation:**
+```tsx
+function PyramidDiagram({ nodes }: { nodes: SmartArtNode[] }) {
+  // Sort by level order
+  const levelOrder = { 'low': 1, 'basic': 1, 'medium': 2, 'high': 3, 'advanced': 3 };
+  const sortedNodes = [...nodes].sort((a, b) => {
+    const aOrder = Object.entries(levelOrder).find(([k]) => a.text.toLowerCase().includes(k))?.[1] ?? 2;
+    const bOrder = Object.entries(levelOrder).find(([k]) => b.text.toLowerCase().includes(k))?.[1] ?? 2;
+    return aOrder - bOrder;
+  });
+
+  // Vertical offsets for ascending effect
+  const verticalOffsets = ['mt-32 md:mt-40', 'mt-16 md:mt-20', 'mt-0'];
+
+  return (
+    <div className="flex flex-col h-full w-full justify-end p-4 md:p-8">
+      {/* Content columns */}
+      <div className="flex justify-between items-end gap-4 md:gap-8 mb-4 relative z-10">
+        {sortedNodes.map((node, index) => (
+          <div key={node.id} className={`flex-1 flex flex-col items-start ${verticalOffsets[index]}`}>
+            <div className="w-8 h-8 md:w-10 md:h-10 rounded-full mb-2" style={{ background: 'var(--color-primary)' }} />
+            <h3 className="text-xl md:text-2xl lg:text-3xl font-bold mb-2" style={{ color: 'var(--color-primary)' }}>
+              {node.text}
+            </h3>
+            {node.children?.length > 0 && (
+              <div className="text-base md:text-lg text-gray-700 space-y-1">
+                {node.children.map((child) => <div key={child.id}>• {child.text}</div>)}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {/* Widening arrow/wedge */}
+      <svg className="w-full h-16 md:h-24" viewBox="0 0 400 60" preserveAspectRatio="none">
+        <polygon points="0,60 0,55 400,0 400,60" fill="#d1d5db" />
+      </svg>
+    </div>
+  );
+}
+```
+
+- Example: Slide 35 "Levels of investment in technology adoption"
+
+### Stats Display Layout (NEW)
+- Added `StatsDisplayDiagram` for empty layouts with icons, numbers, no children
+- Auto-detects: has icons + no children + short text + contains numbers
+
+**Visual Design:**
+- Horizontal row of stats with generous spacing
+- Large icons at top (dark blue filtered)
+- Large bold numbers below (3xl → 6xl)
+- Smaller labels underneath
+
+**Implementation:**
+```tsx
+function StatsDisplayDiagram({ nodes }: { nodes: SmartArtNode[] }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center p-4 md:p-8">
+      <div className="flex gap-8 md:gap-16 lg:gap-24 justify-center items-start">
+        {nodes.map((node) => {
+          // Split "1000+ people" → number: "1000+", label: "people"
+          const match = node.text.match(/^([\d,]+\+?)\s*(.*)$/);
+          const number = match ? match[1] : node.text;
+          const label = match ? match[2] : '';
+
+          return (
+            <div key={node.id} className="flex flex-col items-center text-center">
+              {node.icon && (
+                <img src={node.icon} className="w-16 h-16 md:w-24 md:h-24 lg:w-28 lg:h-28 object-contain mb-4"
+                  style={{ filter: 'brightness(0) saturate(100%) invert(15%) sepia(50%) saturate(1000%) hue-rotate(180deg)' }} />
+              )}
+              <div className="text-3xl md:text-5xl lg:text-6xl font-bold" style={{ color: 'var(--color-primary)' }}>
+                {number}
+              </div>
+              {label && <div className="text-lg md:text-xl lg:text-2xl text-gray-600 mt-1">{label}</div>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+```
+
+- Example: Slide 17 "Since 2022" (1000+ people, 2000+ slides, 100+ presentations)
+
+### Tag Grid Layout (NEW)
+- Added `TagGridDiagram` for empty layouts with many short items
+- Auto-detects: 6+ items + no icons + no children + avg text < 40 chars
+
+**Detection Logic** (distinguishes from Workflow which has longer text):
+```typescript
+function isTagGridLayout(layout: string, nodes: SmartArtNode[]): boolean {
+  if (layout && layout.trim() !== '') return false;
+  const manyItems = nodes.length >= 6;
+  const noIcons = nodes.every(n => !n.icon);
+  const noChildren = nodes.every(n => !n.children || n.children.length === 0);
+  const avgTextLength = nodes.reduce((sum, n) => sum + n.text.length, 0) / nodes.length;
+  const shortText = avgTextLength < 40;  // Tags are short, workflow steps are long
+  return manyItems && noIcons && noChildren && shortText;
+}
+```
+
+**Visual Design**: Flowing grid of rounded tag boxes with gray background.
+
+**Only slide 45 matches** - slide 319 has longer text (avg 55 chars) so falls through to Workflow.
+
+- Example: Slide 45 "Large Language Models" (Music separation, Robotics, NLP, etc.)
+
+### Annotated Grid Layout (NEW) - Reusable Component
+- Added `AnnotatedGridDiagram` for images/screenshots with annotation cards
+- Auto-detects: empty layout + 4-8 items + has icons (images) + has children (annotations)
+
+**Detection Logic:**
+```typescript
+function isAnnotatedGridLayout(layout: string, nodes: SmartArtNode[]): boolean {
+  if (layout && layout.trim() !== '') return false;
+  const rightCount = nodes.length >= 4 && nodes.length <= 8;
+  const hasIcons = nodes.some(n => n.icon);
+  const hasChildren = nodes.some(n => n.children && n.children.length > 0);
+  return rightCount && hasIcons && hasChildren;
+}
+```
+
+**Visual Design:**
+```
+┌─────────────┐  ┌─────────────┐  ┌─────────────┐
+│   [image]   │  │   [image]   │  │   [image]   │
+├─────────────┤  ├─────────────┤  ├─────────────┤
+│ Title       │  │ Title       │  │ Title       │
+│ • bullet 1  │  │ • bullet 1  │  │ • bullet 1  │
+│ • bullet 2  │  │ • bullet 2  │  │             │  ← equal height
+└─────────────┘  └─────────────┘  └─────────────┘
+```
+
+**Key Features:**
+- Images in fixed-height container (h-32 md:h-40) with object-cover
+- Annotation cards use `flex-1` to stretch to equal heights
+- Responsive columns: 2 cols for ≤4 items, 3 cols for 5-8 items
+- Grid uses `items-stretch` to align all cards
+
+**Reusable for:** Tool galleries, app showcases, feature comparisons with screenshots
+
+**Data structure:**
+- `node.icon`: Path to image (can be large screenshots, not just icons)
+- `node.text`: Title for annotation card
+- `node.children[]`: Bullet points for features
+
+**Only slide 53 matches** - "Researcher's AI Workbench" (6 AI tools with features)
+
+### Vertical Workflow Layout (NEW)
+- Added `VerticalWorkflowDiagram` for sequential process steps with connecting arrows
+- Auto-detects: empty layout + 4+ items + no icons + (avg text >= 40 chars OR has children)
+
+**Detection Logic:**
+```typescript
+function isVerticalWorkflowLayout(layout: string, nodes: SmartArtNode[]): boolean {
+  if (layout && layout.trim() !== '') return false;
+  const enoughSteps = nodes.length >= 4;
+  const noIcons = nodes.every(n => !n.icon);
+  const avgTextLength = nodes.reduce((sum, n) => sum + n.text.length, 0) / nodes.length;
+  const longerText = avgTextLength >= 40;
+  const hasChildren = nodes.some(n => n.children && n.children.length > 0);
+  return enoughSteps && noIcons && (longerText || hasChildren);
+}
+```
+
+**Visual Design:**
+```
+┌─────────────────────────────────────┐  ← light gray (#e5e7eb)
+│ Step 1: Description text            │  ← dark blue text
+│   • optional child details          │  ← gray-600 text
+└─────────────────┬───────────────────┘
+                  ▼                      ← dark blue arrow
+┌─────────────────────────────────────┐
+│ Step 2: Description text            │
+└─────────────────┬───────────────────┘
+                  ▼
+┌─────────────────────────────────────┐
+│ Step 3: Description text            │
+└─────────────────────────────────────┘
+```
+
+**Implementation:**
+```tsx
+function VerticalWorkflowDiagram({ nodes }: { nodes: SmartArtNode[] }) {
+  return (
+    <div className="flex h-full w-full items-center justify-center p-4 md:p-6">
+      <div className="flex flex-col items-center w-full max-w-2xl">
+        {nodes.map((node, index) => (
+          <div key={node.id} className="w-full flex flex-col items-center">
+            {/* Step box - light gray background */}
+            <div className="w-full rounded-lg p-4 md:p-5 text-center" style={{ background: '#e5e7eb' }}>
+              <div className="text-base md:text-lg font-medium" style={{ color: 'var(--color-primary)' }}>
+                {node.text}
+              </div>
+              {node.children?.length > 0 && (
+                <div className="text-sm text-gray-600 mt-2 space-y-1">
+                  {node.children.map((child) => <div key={child.id}>• {child.text}</div>)}
+                </div>
+              )}
+            </div>
+            {/* Arrow connector */}
+            {index < nodes.length - 1 && (
+              <div className="text-3xl my-2" style={{ color: 'var(--color-primary)' }}>▼</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+
+**Matching slides:**
+- Slide 177: "Steps" (5 steps with tool annotations)
+- Slide 319: "Qualitative Survey Data analysis" (6 longer steps)
+
+### Vertical List (GroupedCardNode) Layout Update
+- Children now display to the right of title (not below)
+- Cards fill full width of container
+- Larger text sizes: title xl→2xl, children base→lg
+- Children text wraps with `max-w-[40%]`
+
+**Layout:** `[icon] [title ←flex-1→] [children max-w-40%]`
+
+**Implementation:**
+```tsx
+function GroupedCardNode({ node, fillSpace, theme = 'light' }) {
+  const hasChildren = node.children && node.children.length > 0;
+  return (
+    <div className="rounded-xl p-4 md:p-6 flex items-center gap-4 md:gap-6 w-full" style={{ background: '#e5e7eb' }}>
+      {node.icon && <img src={node.icon} className="w-14 h-14 md:w-16 md:h-16 object-contain shrink-0" ... />}
+      <h3 className={`text-xl md:text-2xl font-semibold ${hasChildren ? 'flex-1 min-w-0' : ''}`} style={{ color: 'var(--color-primary)' }}>
+        {node.text}
+      </h3>
+      {hasChildren && (
+        <div className="text-base md:text-lg max-w-[40%]" style={{ color: '#4b5563' }}>
+          {node.children.map((child) => <div key={child.id}>{child.text}</div>)}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+**Applies to:** Slides with "Icon Vertical Solid List" layout (10, 14, 16, 30, 34, 39, 65, 71, etc.)
+
+### Intro Title Slide (NEW)
+
+**Detection:** Slide 1 with "Title Slide" in layout name and has media (QR code)
+
+**Visual Design:**
+```
+┌──────────────────────────────────────────────────────┐
+│                                                      │  ← light gray gradient
+│   ┌──────────┐              ┌────────────────────┐   │
+│   │          │              │                    │   │
+│   │  [QR]    │              │   Title Text       │   │  ← dark blue box
+│   │          │              │                    │   │
+│   └──────────┘              └────────────────────┘   │
+│   url.link.here                                      │  ← primary color text
+│                                                      │
+├──────────────────────────────────────────────────────┤
+│          email@address.com                           │  ← dark blue strip
+└──────────────────────────────────────────────────────┘
+```
+
+**Layout:**
+- QR code/image on left (40% width) with URL below
+- Title in dark blue box on right (50% width)
+- Email in dark blue strip at bottom
+
+**Implementation** (`TitleSlide.tsx`):
+```tsx
+// Check if this is the intro/first slide
+const isIntroSlide = slide.layout.toLowerCase().includes('title slide') && slide.order === 1;
+
+if (isIntroSlide && hasMedia) {
+  // Separate URL from email
+  const urlInfo: string[] = [];
+  const emailInfo: string[] = [];
+  listContent.forEach(list => {
+    if ('items' in list) {
+      list.items.forEach((item: { text?: string }) => {
+        if (item.text) {
+          if (item.text.includes('@')) emailInfo.push(item.text);
+          else if (item.text.includes('.')) urlInfo.push(item.text);
+        }
+      });
+    }
+  });
+
+  return (
+    <div className="h-full flex flex-col relative"
+      style={{ background: 'linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%)' }}>
+      {/* Main content area */}
+      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-8 p-8 md:p-12">
+        {/* Left side: QR code */}
+        <div className="md:w-2/5 flex flex-col items-center">
+          <div className="w-48 md:w-64 lg:w-72">
+            <MediaGallery images={imageContent} videos={videoContent} />
+          </div>
+          {/* URL below QR code */}
+          {urlInfo.length > 0 && (
+            <div className="mt-4 text-xl md:text-2xl font-medium" style={{ color: 'var(--color-primary)' }}>
+              {urlInfo.map((url, i) => (
+                <a key={i} href={`https://${url}`} target="_blank" rel="noopener noreferrer"
+                  className="hover:underline">{url}</a>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Right side: Title in dark blue box */}
+        <div className="md:w-1/2 px-8 py-10 md:px-12 md:py-14"
+          style={{ background: 'var(--color-primary)' }}>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight text-white text-center">
+            {slide.title}
+          </h1>
+        </div>
+      </div>
+      {/* Bottom strip: Email */}
+      {emailInfo.length > 0 && (
+        <div className="py-3 text-center text-lg md:text-xl text-white"
+          style={{ background: 'var(--color-primary)' }}>
+          {emailInfo.map((email, i) => (
+            <a key={i} href={`mailto:${email}`} className="hover:underline">{email}</a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+**Data extraction:**
+- Images → MediaGallery (QR code)
+- List items with `.` but no `@` → URL (displayed below QR)
+- List items with `@` → Email (displayed in bottom strip)
+
+### Final Slide and License Slide (NEW)
+
+**FinalSlide component** (`FinalSlide.tsx`):
+- Gradient background (primary color)
+- Large centered "Thank you" title
+- Contact info/URLs as clickable links
+- Detects slides with "final" in layout or title "Thank you"
+
+**LicenseSlide component** (`LicenseSlide.tsx`):
+- Light background with centered content
+- CC BY license icon (linked to creativecommons.org)
+- Parses title text for main license and additional notes
+- "View full license terms" link
+- Detects slides with "Creative Commons" or "licensed under" in title
+
+**Detection logic** (in `slideHelpers.ts`):
+```typescript
+// Special case: licensing slide (detect by title content)
+if (lowerTitle.includes('creative commons') || lowerTitle.includes('licensed under')) {
+  return 'license';
+}
+
+// Special case: final/thank you slide
+if (lowerLayout.includes('final') || lowerTitle === 'thank you') {
+  return 'final';
+}
+```
+
+### Outline View Integration (NEW)
+
+Moved Outline from separate page to subsection of Slides view alongside Content and Screenshot.
+
+**Changes:**
+1. **View Mode** (`useSlideViewMode.tsx`): Added 'outline' as third mode
+   - `type ViewMode = 'content' | 'screenshot' | 'outline'`
+   - `v` key cycles: content → screenshot → outline → content
+
+2. **SlideContainer** - Added Outline button to toggle bar:
+   ```tsx
+   <button onClick={() => setViewMode('outline')} ...>
+     Outline
+   </button>
+   ```
+
+3. **OutlineView component** (`OutlineView.tsx`):
+   - Hierarchical tree view of presentation structure
+   - Current slide highlighted with blue ring and auto-scrolled into view
+   - Click any slide title to navigate
+   - Sections auto-expand when containing current slide
+
+4. **Navigation updates:**
+   - Removed "Outline" from main nav (SiteHeader.tsx)
+   - `/outline` redirects to `/slides/1`
+   - `o` key navigates to slides (outline accessible via `v` toggle)
+
+**Keyboard shortcuts:**
+- `v` - Cycle view: content → screenshot → outline
+- `o` - Go to Slides
+- `d` - Go to Grid view
+- `Esc` - Return from Grid to Slides
+
+### Grid View Navigation (NEW)
+
+- Added Grid button to slide view toggle bar (with divider)
+- Esc key in Grid view returns to Slides
+- Grid button navigates to `/grid`

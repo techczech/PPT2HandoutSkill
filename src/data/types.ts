@@ -174,6 +174,7 @@ export interface ImageResource {
 export interface ToolResource {
   name: string;
   description?: string;
+  url?: string;
 }
 
 export interface TermResource {
@@ -184,6 +185,7 @@ export interface TermResource {
 export interface LinkResource {
   url: string;
   label: string;
+  description?: string;
   slideIndex?: number;
   linkType?: string;
 }

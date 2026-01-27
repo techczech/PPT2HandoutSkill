@@ -5,6 +5,8 @@ import SectionHeader from './SectionHeader';
 import SidebarSlide from './SidebarSlide';
 import MediaSlide from './MediaSlide';
 import QuoteSlide from './QuoteSlide';
+import FinalSlide from './FinalSlide';
+import LicenseSlide from './LicenseSlide';
 import ContentSlide from './ContentSlide';
 
 interface SlideRendererProps {
@@ -12,7 +14,7 @@ interface SlideRendererProps {
 }
 
 export default function SlideRenderer({ slide }: SlideRendererProps) {
-  const category = getLayoutCategory(slide.layout);
+  const category = getLayoutCategory(slide.layout, slide.title);
 
   switch (category) {
     case 'title':
@@ -25,6 +27,10 @@ export default function SlideRenderer({ slide }: SlideRendererProps) {
       return <MediaSlide slide={slide} />;
     case 'quote':
       return <QuoteSlide slide={slide} />;
+    case 'final':
+      return <FinalSlide slide={slide} />;
+    case 'license':
+      return <LicenseSlide slide={slide} />;
     default:
       return <ContentSlide slide={slide} />;
   }
