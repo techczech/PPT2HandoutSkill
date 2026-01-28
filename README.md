@@ -1,6 +1,6 @@
 # PPT2Handout - PowerPoint to Handout Site Generator
 
-> **This is the canonical repository for the `pptx-to-handout` Claude Code skill.**
+> **This is the canonical repository for the `PPT2HandoutSkill` Claude Code skill.**
 >
 > It contains both the skill definition (SKILL.md) and the React template that the skill uses to generate handout sites.
 
@@ -15,14 +15,14 @@ To use this skill in any Claude Code project, create a symlink to this repositor
 ```bash
 # From your project directory
 mkdir -p .claude/skills
-ln -s /path/to/PPT2HandoutSkill .claude/skills/pptx-to-handout
+ln -s /path/to/PPT2HandoutSkill .claude/skills/PPT2HandoutSkill
 ```
 
-The skill will then be available via `/pptx-to-handout` in that project.
+The skill will then be available via `/PPT2HandoutSkill` in that project.
 
 **Example:** If this repo is at `~/gitrepos/ppt-tools/PPT2HandoutSkill`:
 ```bash
-ln -s ~/gitrepos/ppt-tools/PPT2HandoutSkill .claude/skills/pptx-to-handout
+ln -s ~/gitrepos/ppt-tools/PPT2HandoutSkill .claude/skills/PPT2HandoutSkill
 ```
 
 ## Features
@@ -183,7 +183,7 @@ npx wrangler pages deploy dist --project-name=my-handout
 This template includes a Claude Code skill for guided setup:
 
 ```
-/pptx-to-handout
+/PPT2HandoutSkill
 ```
 
 The skill walks you through:
@@ -329,7 +329,7 @@ The template uses strict TypeScript. Check `src/data/types.ts` for expected inte
 
 ## Repository Scope
 
-This repository is the **canonical home** for the `pptx-to-handout` skill. It contains:
+This repository is the **canonical home** for the `PPT2HandoutSkill` skill. It contains:
 
 **What belongs here:**
 - `SKILL.md` and `references/` - Skill definition and documentation
@@ -347,7 +347,7 @@ This repository is the **canonical home** for the `pptx-to-handout` skill. It co
 - **Skill folder** (this repo): Contains only the skill definition and template code
 - **Target folder** (your cloned site): Where you run the skill, extract PPTX, build, and deploy
 
-When you run `/pptx-to-handout`, all commands execute in your current working directory (the target folder). The skill reads its instructions from the symlinked skill folder but writes all output to your target folder.
+When you run `/PPT2HandoutSkill`, all commands execute in your current working directory (the target folder). The skill reads its instructions from the symlinked skill folder but writes all output to your target folder.
 
 If you're building a handout site, **clone this repo** as your starting point. If you want to use the skill in an existing project, **symlink to this repo** (see "Installing the Skill" above).
 

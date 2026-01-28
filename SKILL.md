@@ -1,5 +1,5 @@
 ---
-name: pptx-to-handout
+name: PPT2HandoutSkill
 description: >
   Convert PowerPoint presentations into interactive React handout websites with
   slide viewer, resources page, and one-click deployment. Use this skill when users
@@ -7,7 +7,7 @@ description: >
   slide viewer site, (3) Extract and publish presentation content as a deployable website,
   (4) Build a conference handout page with speaker info and resources. Triggers on:
   "convert pptx to website", "create handout site", "presentation handout", "pptx handout",
-  "slide website", "/pptx-to-handout".
+  "slide website", "/PPT2HandoutSkill".
 ---
 
 > **Canonical Location:** This skill lives at [github.com/techczech/PPT2HandoutSkill](https://github.com/techczech/PPT2HandoutSkill).
@@ -23,7 +23,7 @@ Convert PowerPoint presentations into interactive React handout websites.
 ## Usage
 
 ```
-/pptx-to-handout <path-to-pptx-or-sourcematerials-folder>
+/PPT2HandoutSkill <path-to-pptx-or-sourcematerials-folder>
 ```
 
 ## Core Principles
