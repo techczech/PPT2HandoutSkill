@@ -1,29 +1,27 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
 
-type ViewMode = 'content' | 'screenshot' | 'outline';
+type MainView = 'content' | 'outline' | 'grid';
+type DisplayMode = 'rendered' | 'screenshot';
 
 interface SlideViewModeContextType {
-  viewMode: ViewMode;
-  setViewMode: (mode: ViewMode) => void;
-  toggleViewMode: () => void;
+  mainView: MainView;
+  setMainView: (view: MainView) => void;
+  displayMode: DisplayMode;
+  toggleDisplayMode: () => void;
 }
 
 const SlideViewModeContext = createContext<SlideViewModeContextType | null>(null);
 
 export function SlideViewModeProvider({ children }: { children: ReactNode }) {
-  const [viewMode, setViewMode] = useState<ViewMode>('content');
+  const [mainView, setMainView] = useState<MainView>('content');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('rendered');
 
-  const toggleViewMode = () => {
-    // Cycle through: content -> screenshot -> outline -> content
-    setViewMode(prev => {
-      if (prev === 'content') return 'screenshot';
-      if (prev === 'screenshot') return 'outline';
-      return 'content';
-    });
+  const toggleDisplayMode = () => {
+    setDisplayMode(prev => prev === 'rendered' ? 'screenshot' : 'rendered');
   };
 
   return (
-    <SlideViewModeContext.Provider value={{ viewMode, setViewMode, toggleViewMode }}>
+    <SlideViewModeContext.Provider value={{ mainView, setMainView, displayMode, toggleDisplayMode }}>
       {children}
     </SlideViewModeContext.Provider>
   );

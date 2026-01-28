@@ -157,36 +157,58 @@ function buildOutline(sections: Section[]): OutlineNode[] {
   return outline;
 }
 
+// Depth mapping: section=0, subsection/slide=1, content=2, subitem=3
+const depthForType: Record<string, number> = {
+  section: 0,
+  subsection: 1,
+  slide: 1,
+  content: 2,
+  subitem: 3,
+};
+
+type ExpandLevel = 1 | 2 | 3 | 'all';
+
+// Check if a node branch contains the current slide
+function branchContainsSlide(node: OutlineNode, slideIndex: number): boolean {
+  if (node.slideIndex === slideIndex) return true;
+  return node.children?.some(child => branchContainsSlide(child, slideIndex)) ?? false;
+}
+
 // Recursive outline node renderer
 function OutlineNodeView({
   node,
   depth = 0,
   currentSlideIndex,
-  onNavigate
+  onNavigate,
+  expandLevel,
 }: {
   node: OutlineNode;
   depth?: number;
   currentSlideIndex: number;
   onNavigate: (index: number) => void;
+  expandLevel: ExpandLevel;
 }) {
   const isCurrentSlide = node.slideIndex === currentSlideIndex;
-  const containsCurrentSlide = node.children?.some(child =>
-    child.slideIndex === currentSlideIndex ||
-    child.children?.some(grandchild => grandchild.slideIndex === currentSlideIndex)
-  );
+  const containsCurrentSlide = branchContainsSlide(node, currentSlideIndex) && !isCurrentSlide;
 
-  const [expanded, setExpanded] = useState(depth < 1 || containsCurrentSlide || isCurrentSlide);
+  const nodeDepth = depthForType[node.type] ?? depth;
+  const shouldExpandByLevel = expandLevel === 'all' || nodeDepth < (expandLevel as number);
+  const shouldExpandForCurrent = containsCurrentSlide || isCurrentSlide;
+
+  const [expanded, setExpanded] = useState(shouldExpandByLevel || shouldExpandForCurrent);
   const nodeRef = useRef<HTMLDivElement>(null);
 
-  // Auto-expand and scroll when current slide is in this branch
+  // React to expandLevel changes
   useEffect(() => {
-    if (containsCurrentSlide || isCurrentSlide) {
-      setExpanded(true);
-    }
+    setExpanded(shouldExpandByLevel || shouldExpandForCurrent);
+  }, [expandLevel, shouldExpandByLevel, shouldExpandForCurrent]);
+
+  // Auto-scroll to current slide
+  useEffect(() => {
     if (isCurrentSlide && nodeRef.current) {
       nodeRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [currentSlideIndex, containsCurrentSlide, isCurrentSlide]);
+  }, [currentSlideIndex, isCurrentSlide]);
 
   const hasChildren = node.children && node.children.length > 0;
   const indent = depth * 16;
@@ -246,6 +268,7 @@ function OutlineNodeView({
               depth={depth + 1}
               currentSlideIndex={currentSlideIndex}
               onNavigate={onNavigate}
+              expandLevel={expandLevel}
             />
           ))}
         </div>
@@ -256,18 +279,44 @@ function OutlineNodeView({
 
 export default function OutlineView({ currentSlideIndex }: OutlineViewProps) {
   const navigate = useNavigate();
+  const [expandLevel, setExpandLevel] = useState<ExpandLevel>(2);
   const outline = buildOutline(presentationData.sections as Section[]);
 
   const handleNavigate = (slideIndex: number) => {
     navigate(`/slides/${slideIndex + 1}`);
   };
 
+  const levels: { label: string; value: ExpandLevel }[] = [
+    { label: '1', value: 1 },
+    { label: '2', value: 2 },
+    { label: '3', value: 3 },
+    { label: 'All', value: 'all' },
+  ];
+
   return (
     <div className="h-full overflow-auto p-4 bg-gray-50">
       <div className="max-w-3xl mx-auto">
-        <p className="text-xs text-gray-500 mb-3">
-          Click on any slide to navigate. Current slide is highlighted.
-        </p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs text-gray-500">
+            Click on any slide to navigate. Current slide is highlighted.
+          </p>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-400 mr-1">Level:</span>
+            {levels.map(({ label, value }) => (
+              <button
+                key={label}
+                onClick={() => setExpandLevel(value)}
+                className={`px-2 py-0.5 text-xs rounded ${
+                  expandLevel === value
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-500 border hover:bg-gray-50'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         {outline.map((section, i) => (
           <OutlineNodeView
             key={i}
@@ -275,6 +324,7 @@ export default function OutlineView({ currentSlideIndex }: OutlineViewProps) {
             depth={0}
             currentSlideIndex={currentSlideIndex}
             onNavigate={handleNavigate}
+            expandLevel={expandLevel}
           />
         ))}
       </div>

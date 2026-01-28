@@ -9,7 +9,9 @@ const shortcuts = [
   { category: 'Navigation', items: [
     { keys: ['h'], description: 'Go to Home' },
     { keys: ['s'], description: 'Go to Slides' },
+    { keys: ['o'], description: 'Go to Slides (outline view)' },
     { keys: ['i'], description: 'Go to Index' },
+    { keys: ['t'], description: 'Go to Activities' },
     { keys: ['m'], description: 'Go to Media Gallery' },
     { keys: ['a'], description: 'Go to About' },
   ]},
@@ -18,6 +20,12 @@ const shortcuts = [
     { keys: ['Space'], description: 'Next slide' },
     { keys: ['↑', '↓'], description: 'Previous / Next section' },
     { keys: ['Home', 'End'], description: 'First / Last slide' },
+    { keys: ['g'], description: 'Go to slide number' },
+    { keys: ['c'], description: 'Content view' },
+    { keys: ['o'], description: 'Outline view' },
+    { keys: ['d'], description: 'Grid view' },
+    { keys: ['v'], description: 'Toggle rendered/screenshot mode' },
+    { keys: ['Esc'], description: 'Return to content view' },
   ]},
   { category: 'Other', items: [
     { keys: ['/'], description: 'Open search' },

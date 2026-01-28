@@ -501,13 +501,31 @@ video {
   .site-header,
   .site-footer,
   .nav-button,
-  .progress-bar {
-    display: none;
+  .progress-bar,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  body {
+    background: white;
   }
 
   .slide-container {
     box-shadow: none;
     border: 1px solid #ccc;
     page-break-inside: avoid;
+    page-break-after: always;
+    border-radius: 0;
+    min-height: auto;
+  }
+
+  .page-container {
+    box-shadow: none;
+    margin: 0;
+    max-width: 100%;
+  }
+
+  .section-sidebar {
+    display: none;
   }
 }

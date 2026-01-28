@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useNavigation } from './useNavigation';
 import { useSlideViewMode } from './useSlideViewMode';
 
@@ -8,9 +7,8 @@ import { useSlideViewMode } from './useSlideViewMode';
  * Global shortcuts (/, h, m, s, r, ?) are handled by useGlobalKeyboard.
  */
 export function useKeyboard() {
-  const navigate = useNavigate();
   const { nextSlide, prevSlide, nextSection, prevSection, goToFirst, goToLast, goToSlide, totalSlides } = useNavigation();
-  const { toggleViewMode } = useSlideViewMode();
+  const { mainView, setMainView, toggleDisplayMode } = useSlideViewMode();
 
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
@@ -51,10 +49,27 @@ export function useKeyboard() {
           event.preventDefault();
           goToLast();
           break;
-        // Toggle view mode: v
+        // Content view: c
+        case 'c':
+          event.preventDefault();
+          setMainView('content');
+          break;
+        // Outline view: o
+        case 'o':
+          event.preventDefault();
+          setMainView('outline');
+          break;
+        // Grid view: d
+        case 'd':
+          if (!event.metaKey && !event.ctrlKey) {
+            event.preventDefault();
+            setMainView('grid');
+          }
+          break;
+        // Toggle display mode (rendered/screenshot): v
         case 'v':
           event.preventDefault();
-          toggleViewMode();
+          toggleDisplayMode();
           break;
         // Go to slide: g
         case 'g':
@@ -63,15 +78,15 @@ export function useKeyboard() {
           if (input) {
             const num = parseInt(input, 10);
             if (!isNaN(num) && num >= 1 && num <= totalSlides) {
-              goToSlide(num - 1); // Convert to 0-indexed
+              goToSlide(num - 1);
             }
           }
           break;
-        // Grid view: d (without modifier keys)
-        case 'd':
-          if (!event.metaKey && !event.ctrlKey) {
+        // Escape returns to content view
+        case 'Escape':
+          if (mainView !== 'content') {
             event.preventDefault();
-            navigate('/grid');
+            setMainView('content');
           }
           break;
       }
@@ -79,5 +94,5 @@ export function useKeyboard() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate, nextSlide, prevSlide, nextSection, prevSection, goToFirst, goToLast, toggleViewMode, goToSlide, totalSlides]);
+  }, [nextSlide, prevSlide, nextSection, prevSection, goToFirst, goToLast, setMainView, toggleDisplayMode, goToSlide, totalSlides, mainView]);
 }

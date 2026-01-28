@@ -77,6 +77,15 @@ export function useGlobalKeyboard(): GlobalKeyboardState {
           }
           break;
 
+        // Outline: o (on slides page, toggles outline overlay; elsewhere, navigates to slides)
+        case 'o':
+        case 'O':
+          if (!event.ctrlKey && !event.metaKey) {
+            event.preventDefault();
+            navigate('/slides/1');
+          }
+          break;
+
         // Media: m
         case 'm':
         case 'M':
@@ -92,6 +101,15 @@ export function useGlobalKeyboard(): GlobalKeyboardState {
           if (!event.ctrlKey && !event.metaKey) {
             event.preventDefault();
             navigate('/resources');
+          }
+          break;
+
+        // Activities: t
+        case 't':
+        case 'T':
+          if (!event.ctrlKey && !event.metaKey) {
+            event.preventDefault();
+            navigate('/activities');
           }
           break;
 
