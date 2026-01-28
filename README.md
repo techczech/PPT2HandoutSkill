@@ -1,8 +1,29 @@
 # PPT2Handout - PowerPoint to Handout Site Generator
 
+> **This is the canonical repository for the `pptx-to-handout` Claude Code skill.**
+>
+> It contains both the skill definition (SKILL.md) and the React template that the skill uses to generate handout sites.
+
 Convert PowerPoint presentations into interactive React handout websites with automatic resource extraction, responsive design, and easy deployment.
 
 **📋 [View Changelog](CHANGELOG.md)** - See what's new in the latest version
+
+## Installing the Skill
+
+To use this skill in any Claude Code project, create a symlink to this repository:
+
+```bash
+# From your project directory
+mkdir -p .claude/skills
+ln -s /path/to/PPT2HandoutSkill .claude/skills/pptx-to-handout
+```
+
+The skill will then be available via `/pptx-to-handout` in that project.
+
+**Example:** If this repo is at `~/gitrepos/ppt-tools/PPT2HandoutSkill`:
+```bash
+ln -s ~/gitrepos/ppt-tools/PPT2HandoutSkill .claude/skills/pptx-to-handout
+```
 
 ## Features
 
@@ -305,6 +326,30 @@ Cloudflare Pages has a 25MB file size limit. The build process automatically com
 
 ### TypeScript errors
 The template uses strict TypeScript. Check `src/data/types.ts` for expected interfaces.
+
+## Repository Scope
+
+This repository is the **canonical home** for the `pptx-to-handout` skill. It contains:
+
+**What belongs here:**
+- `SKILL.md` and `references/` - Skill definition and documentation
+- `src/` - React application template
+- `scripts/` - PPTX extraction and media processing tools
+- `README.md`, `CLAUDE.md` - Documentation
+
+**What does NOT belong here (NEVER add these):**
+- `sourcematerials/` - User presentation data goes in TARGET project, not here
+- `dist/` - Build output goes in TARGET project, not here
+- User-generated content of any kind
+- Other skills or unrelated tools
+
+**Skill Folder vs Target Folder:**
+- **Skill folder** (this repo): Contains only the skill definition and template code
+- **Target folder** (your cloned site): Where you run the skill, extract PPTX, build, and deploy
+
+When you run `/pptx-to-handout`, all commands execute in your current working directory (the target folder). The skill reads its instructions from the symlinked skill folder but writes all output to your target folder.
+
+If you're building a handout site, **clone this repo** as your starting point. If you want to use the skill in an existing project, **symlink to this repo** (see "Installing the Skill" above).
 
 ## Contributing
 

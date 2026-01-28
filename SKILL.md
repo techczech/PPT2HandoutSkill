@@ -10,6 +10,12 @@ description: >
   "slide website", "/pptx-to-handout".
 ---
 
+> **Canonical Location:** This skill lives at [github.com/techczech/PPT2HandoutSkill](https://github.com/techczech/PPT2HandoutSkill).
+> To install in other projects, symlink this repository to `.claude/skills/pptx-to-handout`.
+>
+> **IMPORTANT:** Never put `sourcematerials/` or user content in this skill folder.
+> All extraction and generated content goes in the TARGET project folder (your cloned handout site), not here.
+
 # PPTX to Handout Site
 
 Convert PowerPoint presentations into interactive React handout websites.
@@ -30,6 +36,10 @@ Convert PowerPoint presentations into interactive React handout websites.
 ---
 
 ## Workflow
+
+> **Working Directory:** All commands run in the TARGET project folder (your cloned handout site),
+> NOT in the skill folder. The skill folder contains only the skill definition.
+> If starting fresh, first clone the template (see "Setting Up a New Project" below).
 
 ### Step 1: Determine Input Type
 
