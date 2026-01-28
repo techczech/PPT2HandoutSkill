@@ -11,7 +11,7 @@ description: >
 ---
 
 > **Canonical Location:** This skill lives at [github.com/techczech/PPT2HandoutSkill](https://github.com/techczech/PPT2HandoutSkill).
-> To install in other projects, symlink this repository to `.claude/skills/pptx-to-handout`.
+> To install in other projects, symlink this repository to `.claude/skills/PPT2HandoutSkill`.
 >
 > **IMPORTANT:** Never put `sourcematerials/` or user content in this skill folder.
 > All extraction and generated content goes in the TARGET project folder (your cloned handout site), not here.
