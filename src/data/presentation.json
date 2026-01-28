@@ -1,49 +1,61 @@
 {
   "metadata": {
-    "id": "00000000-0000-0000-0000-000000000000",
-    "source_file": "placeholder.pptx",
-    "processed_at": "2026-01-01T00:00:00.000000",
+    "id": "test-presentation",
+    "source_file": "test.pptx",
+    "processed_at": "2026-01-17T12:00:00.000000",
     "stats": {
-      "slide_count": 1,
-      "image_count": 0
+      "slide_count": 3,
+      "image_count": 3
     }
   },
   "sections": [
     {
-      "title": "Getting Started",
+      "title": "Introduction",
       "slides": [
         {
           "order": 1,
-          "title": "Welcome to Your Handout Site",
+          "title": "Welcome to the Test Presentation",
           "layout": "Title Slide",
-          "notes": "This is a placeholder slide. Replace this with your actual presentation content.",
+          "notes": "",
           "content": [
             {
               "type": "heading",
-              "text": "Replace this with your presentation",
-              "level": 2
+              "text": "Welcome",
+              "level": 1
+            }
+          ]
+        },
+        {
+          "order": 2,
+          "title": "Test Slide with Chart",
+          "layout": "Content",
+          "notes": "This slide has a chart image",
+          "content": [
+            {
+              "type": "image",
+              "src": "/assets/images/slides/test_image_1.png",
+              "description": "A presentation slide titled 'Test Slide with Chart' featuring a blue background with a white border and a central white circle containing the text 'Test Image 1 - Chart'. The slide appears to be a test or placeholder image for a chart in a presentation.",
+              "category": "interface_screenshot"
+            }
+          ]
+        },
+        {
+          "order": 3,
+          "title": "Multiple Images Slide",
+          "layout": "Content",
+          "notes": "This slide has multiple images, one already analyzed",
+          "content": [
+            {
+              "type": "image",
+              "src": "/assets/images/slides/test_image_2.png",
+              "description": "A presentation slide with a solid red background, white border, and central white circle containing the text 'Test Image 2 - Screenshot'. It appears to be a test image for a slide titled 'Multiple Images Slide', featuring minimal design elements.",
+              "category": "interface_screenshot"
             },
             {
-              "type": "list",
-              "style": "bullet",
-              "items": [
-                {
-                  "text": "Extract your PowerPoint using: python scripts/extract-pptx.py your-presentation.pptx sourcematerials/",
-                  "children": []
-                },
-                {
-                  "text": "Update src/data/sessionInfo.ts with your session details",
-                  "children": []
-                },
-                {
-                  "text": "Run npm run build to process media and build the site",
-                  "children": []
-                },
-                {
-                  "text": "Deploy with: vercel --prod or wrangler pages deploy dist",
-                  "children": []
-                }
-              ]
+              "type": "image",
+              "src": "/assets/images/slides/test_image_3.png",
+              "description": "This image already has a description - it's a test diagram",
+              "category": "diagram"
             }
           ]
         }

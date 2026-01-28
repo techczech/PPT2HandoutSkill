@@ -6,9 +6,25 @@ interface ContentSlideProps {
   slide: FlatSlide;
 }
 
-// Render title with bold prefix (text before first colon or question mark)
+// Render title preserving line breaks and bolding text before first colon
 function FormattedTitle({ text, className, style }: { text: string; className?: string; style?: React.CSSProperties }) {
-  // Find natural break point - colon followed by space
+  const lines = text.split('\n').filter(l => l.trim());
+
+  if (lines.length > 1) {
+    const firstLine = lines[0].trim();
+    const isBoldFirst = firstLine.endsWith(':');
+
+    return (
+      <div className={className} style={style}>
+        {lines.map((line, i) => (
+          <p key={i} className={i > 0 ? 'mt-4' : ''}>
+            {i === 0 && isBoldFirst ? <strong>{line}</strong> : line}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
   const colonMatch = text.match(/^([^:]+:)\s*(.+)$/);
   const questionMatch = text.match(/^([^?]+\?)\s*(.+)$/);
 
@@ -21,7 +37,6 @@ function FormattedTitle({ text, className, style }: { text: string; className?: 
   }
 
   if (questionMatch) {
-    // Multiple questions - split and render each
     const questions = text.split(/(?<=\?)\s+/);
     if (questions.length > 1) {
       return (
@@ -83,24 +98,27 @@ export default function ContentSlide({ slide }: ContentSlideProps) {
           {slide.title}
         </h2>
         <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 overflow-hidden">
-          {/* Media gallery - centered */}
-          <div className="flex-1 flex items-center justify-center overflow-hidden">
-            <MediaGallery images={imageContent} videos={videoContent} />
-          </div>
-          {/* Text content on right if any - vertically centered */}
+          {/* Text content on left if any - vertically centered */}
           {hasText && (
             <div className="lg:w-2/5 shrink-0 flex items-center">
               <div className="space-y-4 w-full">
                 {otherContent.map((content, index) => (
-                  <ContentRenderer key={index} content={content} size="large" />
+                  <ContentRenderer key={index} content={content} size="large" noBullets />
                 ))}
               </div>
             </div>
           )}
+          {/* Media gallery - centered */}
+          <div className="flex-1 flex items-center justify-center overflow-hidden">
+            <MediaGallery images={imageContent} videos={videoContent} />
+          </div>
         </div>
       </div>
     );
   }
+
+  // Check if content is primarily SmartArt (needs full width)
+  const hasSmartArt = contentItems.some(c => (c as { type: string }).type === 'smart_art');
 
   // Normal slide with content: title at top
   return (
@@ -114,7 +132,7 @@ export default function ContentSlide({ slide }: ContentSlideProps) {
       >
         {slide.title}
       </h2>
-      <div className="flex-1 space-y-6 overflow-y-auto" style={{ maxWidth: '65ch' }}>
+      <div className={`flex-1 space-y-6 overflow-y-auto${hasSmartArt ? '' : ''}`} style={hasSmartArt ? undefined : { maxWidth: '65ch' }}>
         {contentItems.map((content, index) => (
           <ContentRenderer key={index} content={content} size="large" />
         ))}

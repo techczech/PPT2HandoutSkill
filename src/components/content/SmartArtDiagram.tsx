@@ -54,7 +54,11 @@ function isTimelineLayout(layout: string, nodes: SmartArtNode[]): boolean {
   }
   // Check if nodes have time-related keywords
   const timeKeywords = /\b(today|soon|long term|short term|now|future|past|later|immediate|next)\b/i;
-  return nodes.some(n => timeKeywords.test(n.text));
+  // Check for date patterns (months, years, seasons)
+  const datePatterns = /\b(january|february|march|april|may|june|july|august|september|october|november|december|spring|summer|autumn|fall|winter|20\d{2}|19\d{2})\b/i;
+  // Timeline if majority of nodes match time/date patterns
+  const timeMatches = nodes.filter(n => timeKeywords.test(n.text) || datePatterns.test(n.text)).length;
+  return timeMatches >= Math.ceil(nodes.length / 2);
 }
 
 // Check if layout is a pyramid/funnel (empty layout with level-related keywords)
@@ -123,7 +127,8 @@ function isAnnotatedGridLayout(layout: string, nodes: SmartArtNode[]): boolean {
   return rightCount && hasIcons && hasChildren;
 }
 
-// Check if layout is a vertical workflow (empty layout, 4+ steps, no icons, longer text OR has children)
+// Check if layout is a vertical workflow (empty layout, 4+ steps, no icons, longer text, NO children)
+// Workflows are sequential steps without sub-items. Items with children are vertical lists, not workflows.
 function isVerticalWorkflowLayout(layout: string, nodes: SmartArtNode[]): boolean {
   // Only for empty/unknown layouts
   if (layout && layout.trim() !== '') {
@@ -133,12 +138,13 @@ function isVerticalWorkflowLayout(layout: string, nodes: SmartArtNode[]): boolea
   const enoughSteps = nodes.length >= 4;
   // No icons
   const noIcons = nodes.every(n => !n.icon);
-  // Either: longer text (avg >= 40 chars) OR has children (workflow with annotations)
+  // Longer text (avg >= 40 chars)
   const avgTextLength = nodes.reduce((sum, n) => sum + n.text.length, 0) / nodes.length;
   const longerText = avgTextLength >= 40;
+  // Must NOT have children — items with children are categorized lists, not workflows
   const hasChildren = nodes.some(n => n.children && n.children.length > 0);
 
-  return enoughSteps && noIcons && (longerText || hasChildren);
+  return enoughSteps && noIcons && longerText && !hasChildren;
 }
 
 // Check if layout is a vertical list-style (should be rendered as stacked cards)
@@ -264,18 +270,27 @@ function HorizontalNumberedDiagram({ nodes }: { nodes: SmartArtNode[] }) {
 }
 
 // Horizontal icon layout for Icon Label Description List, Icon Label List, etc.
-function HorizontalIconDiagram({ nodes }: { nodes: SmartArtNode[] }) {
+function HorizontalIconDiagram({ nodes, showArrows = false }: { nodes: SmartArtNode[]; showArrows?: boolean }) {
   return (
     <div className="flex flex-col h-full w-full">
       {/* Horizontal icons container - fills available space */}
       <div className="flex-1 flex gap-4 md:gap-8 lg:gap-12 px-4 md:px-8 py-6 md:py-10 justify-center items-start">
-        {nodes.map((node) => (
+        {nodes.map((node, index) => (
           <div
             key={node.id}
-            className="flex-1 flex flex-col items-center text-center"
+            className="flex-1 flex flex-col items-center text-center relative"
           >
+            {/* Arrow connector to next item */}
+            {showArrows && index < nodes.length - 1 && (
+              <div
+                className="absolute top-10 md:top-14 lg:top-16 -right-2 md:-right-4 lg:-right-6 text-2xl md:text-3xl font-bold z-10"
+                style={{ color: 'var(--color-primary)' }}
+              >
+                →
+              </div>
+            )}
             {/* Icon - large and prominent, show in original colors */}
-            {node.icon && (
+            {node.icon ? (
               <img
                 src={node.icon}
                 alt={node.icon_alt || ''}
@@ -283,6 +298,11 @@ function HorizontalIconDiagram({ nodes }: { nodes: SmartArtNode[] }) {
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
+              />
+            ) : (
+              <div
+                className="w-20 h-20 md:w-28 md:h-28 lg:w-32 lg:h-32 mb-4 md:mb-6 rounded-lg"
+                style={{ backgroundColor: 'var(--color-primary)' }}
               />
             )}
             {/* Title - large and bold */}
@@ -341,95 +361,69 @@ function HorizontalComparisonDiagram({ nodes }: { nodes: SmartArtNode[] }) {
 }
 
 // Horizontal timeline layout for time-based progressions
+// Renders as a horizontal arrow with circles on it, content alternating above/below
 function HorizontalTimeline({ nodes }: { nodes: SmartArtNode[] }) {
-  // Sort nodes by time order: today/now first, then soon, then long term/future
-  const timeOrder: Record<string, number> = {
-    'today': 1, 'now': 1, 'immediate': 1,
-    'soon': 2, 'next': 2,
-    'later': 3, 'long term': 4, 'future': 5,
-  };
-
-  const sortedNodes = [...nodes].sort((a, b) => {
-    const aText = a.text.toLowerCase();
-    const bText = b.text.toLowerCase();
-    const aOrder = Object.entries(timeOrder).find(([k]) => aText.includes(k))?.[1] ?? 99;
-    const bOrder = Object.entries(timeOrder).find(([k]) => bText.includes(k))?.[1] ?? 99;
-    return aOrder - bOrder;
-  });
-
   return (
-    <div className="flex flex-col h-full w-full px-4 md:px-8 py-6">
-      {/* Timeline connector line */}
-      <div className="relative flex items-center justify-center mb-6">
-        <div
-          className="absolute h-1 rounded-full"
-          style={{
-            background: 'var(--color-primary)',
-            width: '80%',
-            left: '10%'
-          }}
-        />
-        {/* Timeline points */}
-        <div className="relative flex justify-between w-4/5">
-          {sortedNodes.map((node, index) => (
-            <div key={node.id} className="flex flex-col items-center">
-              {/* Circle marker */}
-              <div
-                className="w-5 h-5 md:w-6 md:h-6 rounded-full border-4 bg-white z-10"
-                style={{ borderColor: 'var(--color-primary)' }}
-              />
-              {/* Phase label above */}
-              <div
-                className="absolute -top-8 text-lg md:text-xl font-bold whitespace-nowrap"
-                style={{ color: 'var(--color-primary)' }}
-              >
-                {node.text}
-              </div>
-              {/* Arrow between nodes */}
-              {index < sortedNodes.length - 1 && (
-                <div
-                  className="absolute top-2 text-2xl"
-                  style={{
-                    color: 'var(--color-primary)',
-                    left: '100%',
-                    marginLeft: '1rem'
-                  }}
-                >
-                  →
-                </div>
-              )}
-            </div>
-          ))}
+    <div className="flex flex-col h-full w-full px-2 md:px-6 py-6 justify-center">
+      {/* Main timeline area with arrow and items */}
+      <div className="relative" style={{ minHeight: '300px' }}>
+        {/* Gray arrow background spanning full width */}
+        <div className="absolute left-0 right-0" style={{ top: '50%', transform: 'translateY(-50%)' }}>
+          <svg width="100%" height="48" viewBox="0 0 1000 48" preserveAspectRatio="none">
+            <polygon
+              points="0,8 960,8 960,0 1000,24 960,48 960,40 0,40"
+              fill="#d1d5db"
+            />
+          </svg>
         </div>
-      </div>
 
-      {/* Content cards below timeline */}
-      <div className="flex-1 flex gap-4 md:gap-6 justify-center mt-8">
-        {sortedNodes.map((node) => (
-          <div
-            key={node.id}
-            className="flex-1 max-w-xs bg-gray-100 rounded-xl p-4 md:p-6"
-          >
-            {/* Phase title */}
-            <h3
-              className="text-xl md:text-2xl font-bold mb-3 text-center"
-              style={{ color: 'var(--color-primary)' }}
-            >
-              {node.text}
-            </h3>
-            {/* Children as items */}
-            {node.children && node.children.length > 0 && (
-              <div className="text-base md:text-lg text-gray-700 space-y-2">
-                {node.children.map((child) => (
-                  <div key={child.id} className="flex items-start gap-2">
-                    <span style={{ color: 'var(--color-primary)' }}>•</span>
-                    <span>{child.text}</span>
-                  </div>
-                ))}
+        {/* Timeline items positioned along the arrow */}
+        <div className="relative flex justify-between items-center" style={{ minHeight: '300px' }}>
+          {nodes.map((node, index) => {
+            const isAbove = index % 2 === 0;
+            return (
+              <div
+                key={node.id}
+                className="flex-1 flex flex-col items-center relative"
+              >
+                {/* Content card - above or below the line */}
+                <div
+                  className={`text-center px-2 ${isAbove ? 'mb-auto pb-4' : 'mt-auto pt-4'}`}
+                  style={{ order: isAbove ? 0 : 2 }}
+                >
+                  <h3
+                    className="text-sm md:text-base lg:text-lg font-bold mb-1"
+                    style={{ color: 'var(--color-primary)' }}
+                  >
+                    {node.text}
+                  </h3>
+                  {node.children && node.children.length > 0 && (
+                    <div className="text-xs md:text-sm text-gray-700 space-y-0.5">
+                      {node.children.map((child) => (
+                        <div key={child.id} className="flex items-start gap-1 justify-center">
+                          <span style={{ color: 'var(--color-primary)' }}>•</span>
+                          <span className="text-left">{child.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Circle marker on the arrow line */}
+                <div
+                  className="w-6 h-6 md:w-8 md:h-8 rounded-full z-10 shrink-0"
+                  style={{ backgroundColor: 'var(--color-primary)', order: 1 }}
+                />
+
+                {/* Spacer for the opposite side */}
+                <div
+                  className={`flex-1 ${isAbove ? '' : ''}`}
+                  style={{ order: isAbove ? 2 : 0, minHeight: '60px' }}
+                />
               </div>
-            )}
-          </div>
-        ))}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -828,6 +822,13 @@ export default function SmartArtDiagram({ content, fillSpace = false, theme = 'l
   // Check for stats display layouts (empty layout with icons, numbers, no children)
   if (isStatsLayout(content.layout, content.nodes)) {
     return <StatsDisplayDiagram nodes={content.nodes} />;
+  }
+
+  // Empty layout with icons and no children → horizontal icon layout with arrows (sequence)
+  if ((!content.layout || content.layout.trim() === '') &&
+      content.nodes.some(n => n.icon) &&
+      content.nodes.every(n => !n.children || n.children.length === 0)) {
+    return <HorizontalIconDiagram nodes={content.nodes} showArrows={true} />;
   }
 
   // Check for tag grid layouts (empty layout, many items, no icons, no children)

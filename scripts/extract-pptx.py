@@ -22,7 +22,8 @@ Features:
     - Image extraction with optional AI-powered analysis
     - Table extraction
     - Speaker notes extraction
-    - Section detection from slide structure
+    - SmartArt diagram extraction (node hierarchy from diagram XML)
+    - Section detection from slide layout names and content
 
 Text Formatting:
     List items and headings include a 'runs' array when formatting is present:
@@ -38,8 +39,8 @@ Shape Extraction:
     - animation_order: entry order in animations (1-based)
 
 Limitations:
-    - SmartArt diagrams are exported as images (structure not preserved)
     - Complex animations are simplified to just entry order
+    - Image analysis recommended after extraction for descriptions
     - Manual review recommended after extraction
 """
 
@@ -402,6 +403,215 @@ def extract_auto_shape(shape, animation_map):
         return None
 
 
+def extract_smart_art(shape, slide, media_dir):
+    """Extract SmartArt diagram content from a graphicFrame shape.
+
+    Extracts node hierarchy, layout name, and icon images (sa_ prefix files).
+    Icons are associated with their owning data nodes via presentation
+    relationship tracing (presOf, presParOf connections).
+
+    Returns a smart_art content block with nodes, or None if not SmartArt.
+    """
+    from lxml import etree
+    import os
+
+    el = shape._element
+    ns_dgm = "http://schemas.openxmlformats.org/drawingml/2006/diagram"
+    ns_a = "http://schemas.openxmlformats.org/drawingml/2006/main"
+    ns_r = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+
+    dgm_els = el.findall('.//{%s}relIds' % ns_dgm)
+    if not dgm_els:
+        return None
+
+    try:
+        # Get diagram data relationship
+        dm_rid = dgm_els[0].get('{%s}dm' % ns_r)
+        if not dm_rid or dm_rid not in slide.part.rels:
+            return None
+
+        rel = slide.part.rels[dm_rid]
+        data_part = rel.target_part
+        xml = etree.fromstring(data_part.blob)
+
+        # Extract all diagram points (nodes) with icons
+        pts = xml.findall('.//{%s}pt' % ns_dgm)
+        cxns = xml.findall('.//{%s}cxn' % ns_dgm)
+
+        # Build node map with icon extraction
+        node_map = {}
+        for pt in pts:
+            mid = pt.get('modelId')
+            ptype = pt.get('type', 'node')
+            t_els = pt.findall('.//{%s}t' % ns_a)
+            text = ' '.join((t.text or '') for t in t_els).strip()
+
+            # Extract icon image from blip element
+            icon = None
+            icon_alt = None
+            cnvpr = pt.find('.//{%s}cNvPr' % ns_a)
+            if cnvpr is not None:
+                icon_alt = cnvpr.get('descr') or cnvpr.get('title')
+            blip = pt.find('.//{%s}blip' % ns_a)
+            if blip is not None:
+                rid = blip.get('{%s}embed' % ns_r)
+                if rid:
+                    try:
+                        img_part = data_part.related_part(rid)
+                        ext = img_part.content_type.split('/')[-1].replace('x-', '').replace('+xml', '')
+                        safe_mid = mid.replace('{', '').replace('}', '').replace('-', '')
+                        fname = f"sa_{safe_mid}.{ext}"
+                        fpath = os.path.join(str(media_dir), fname)
+                        with open(fpath, 'wb') as f:
+                            f.write(img_part.blob)
+                        icon = f"./{fname}"
+                    except (KeyError, IOError) as e:
+                        print(f"    Warning: Could not extract SmartArt icon: {e}")
+
+            node_map[mid] = {
+                'id': mid, 'type': ptype, 'text': text,
+                'children_ids': [], 'icon': icon, 'icon_alt': icon_alt
+            }
+
+        # Build presentation relationship maps for icon reassignment
+        visual_to_data = {}
+        visual_parent = {}
+        visual_children = {}
+        data_root_id = None
+
+        for mid, node in node_map.items():
+            if node['type'] == 'doc':
+                data_root_id = mid
+                break
+
+        for cxn in cxns:
+            src_id = cxn.get('srcId', '')
+            dst_id = cxn.get('destId', '')
+            ctype = cxn.get('type', 'parOf')
+            if ctype in ('parOf', ''):
+                if src_id in node_map:
+                    node_map[src_id]['children_ids'].append(dst_id)
+            elif ctype == 'presOf':
+                visual_to_data[dst_id] = src_id
+            elif ctype == 'presParOf':
+                visual_parent[dst_id] = src_id
+                visual_children.setdefault(src_id, []).append(dst_id)
+
+        # presAssocID explicit associations
+        for pt in pts:
+            mid = pt.get('modelId')
+            pr_set = pt.find('{%s}prSet' % ns_dgm)
+            if pr_set is not None:
+                assoc_id = pr_set.get('presAssocID')
+                if assoc_id:
+                    visual_to_data[mid] = assoc_id
+
+        # Reassign icons from visual nodes to their data owners
+        def find_data_owner(vid):
+            curr = vid
+            visited = set()
+            while curr and curr not in visited:
+                visited.add(curr)
+                if curr in visual_to_data:
+                    did = visual_to_data[curr]
+                    if did != data_root_id:
+                        return did
+                parent = visual_parent.get(curr)
+                if parent:
+                    for sib in visual_children.get(parent, []):
+                        if sib != curr and sib in visual_to_data:
+                            did = visual_to_data[sib]
+                            if did != data_root_id:
+                                return did
+                curr = parent
+            return None
+
+        for mid, node in node_map.items():
+            if node['icon']:
+                owner_id = find_data_owner(mid)
+                if owner_id and owner_id != mid and owner_id in node_map:
+                    if not node_map[owner_id]['icon']:
+                        node_map[owner_id]['icon'] = node['icon']
+                        node_map[owner_id]['icon_alt'] = node['icon_alt']
+                        node['icon'] = None
+                        node['icon_alt'] = None
+
+        # Find doc node for tree building
+        doc_node = data_root_id
+
+        def build_node(mid, level=0):
+            node = node_map.get(mid)
+            if not node or node['type'] != 'node':
+                return None
+            if not node['text'] and not node['icon']:
+                return None
+            result = {
+                'id': mid[:8],
+                'text': node['text'],
+                'level': level,
+                'children': [],
+                'icon': node['icon'],
+                'icon_alt': node['icon_alt']
+            }
+            for child_id in node.get('children_ids', []):
+                child = build_node(child_id, level + 1)
+                if child:
+                    result['children'].append(child)
+            return result
+
+        # Build tree from doc node's children
+        nodes = []
+        if doc_node and doc_node in node_map:
+            for child_id in node_map[doc_node]['children_ids']:
+                node = build_node(child_id, 0)
+                if node:
+                    nodes.append(node)
+
+        if not nodes:
+            # Fallback: collect all nodes with text or icons
+            for mid, node in node_map.items():
+                if node['type'] == 'node' and (node['text'] or node['icon']):
+                    nodes.append({
+                        'id': mid[:8],
+                        'text': node['text'],
+                        'level': 0,
+                        'children': [],
+                        'icon': node['icon'],
+                        'icon_alt': node['icon_alt']
+                    })
+
+        if not nodes:
+            return None
+
+        # Try to detect layout type from diagram XML
+        layout_name = ''
+        try:
+            lo_rid = dgm_els[0].get('{%s}lo' % ns_r)
+            if lo_rid and lo_rid in slide.part.rels:
+                lo_rel = slide.part.rels[lo_rid]
+                lo_xml = etree.fromstring(lo_rel.target_part.blob)
+                # Layout name is in <dgm:title val="..."/> child element
+                title_el = lo_xml.find('{%s}title' % ns_dgm)
+                if title_el is not None:
+                    layout_name = title_el.get('val', '')
+        except Exception:
+            pass
+
+        icon_count = sum(1 for n in nodes if n['icon'])
+        if icon_count:
+            print(f"    SmartArt '{layout_name}': {len(nodes)} nodes, {icon_count} icons")
+
+        return {
+            'type': 'smart_art',
+            'layout': layout_name,
+            'nodes': nodes
+        }
+
+    except Exception as e:
+        print(f"    Warning: Could not extract SmartArt: {e}")
+        return None
+
+
 def extract_text_from_shape(shape):
     """Extract text content from a shape with formatting."""
     if not shape.has_text_frame:
@@ -486,7 +696,7 @@ def extract_emf_embedded_image(emf_data: bytes):
 def extract_image(shape, media_dir, slide_num, shape_idx, slide_title=None):
     """Extract image from shape and save to media directory."""
     try:
-        if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+        if hasattr(shape, 'image') and hasattr(shape.image, 'blob'):
             image = shape.image
             ext = image.ext
             blob = image.blob
@@ -562,6 +772,132 @@ def extract_image(shape, media_dir, slide_num, shape_idx, slide_title=None):
     return None
 
 
+def extract_layout_background(slide_layout, media_dir, slide_num):
+    """Extract the largest image from a slide layout (background image).
+
+    Title/final slides often have a background image in the slide layout
+    rather than on the slide itself. This extracts that image.
+    """
+    try:
+        largest = None
+        largest_size = 0
+        for shape in slide_layout.shapes:
+            if hasattr(shape, 'image') and hasattr(shape.image, 'blob'):
+                blob_size = len(shape.image.blob)
+                # Pick the largest image (background), skip small logos
+                if blob_size > largest_size:
+                    largest_size = blob_size
+                    largest = shape
+
+        if largest and largest_size > 100000:  # >100KB, likely a background
+            image = largest.image
+            ext = image.ext
+            filename = f"layout_bg_{slide_num}.{ext}"
+            filepath = os.path.join(media_dir, filename)
+            with open(filepath, 'wb') as f:
+                f.write(image.blob)
+            print(f"  Extracted layout background: {filename} ({largest_size} bytes)")
+            return f"./{filename}"
+    except Exception as e:
+        print(f"  Warning: Could not extract layout background: {e}")
+    return None
+
+
+def extract_video(shape, media_dir, slide_num):
+    """Extract video from a shape (embedded or external URL).
+
+    Checks for a:videoFile in nvPicPr, nvSpPr, and element tree.
+    Handles external URLs (YouTube etc.) and embedded p14:media blobs.
+
+    Returns a video/link content block, or None.
+    """
+    try:
+        element = shape._element if hasattr(shape, '_element') else None
+        if element is None:
+            return None
+
+        ns = {
+            'a': 'http://schemas.openxmlformats.org/drawingml/2006/main',
+            'r': 'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+            'p14': 'http://schemas.microsoft.com/office/powerpoint/2010/main',
+            'p': 'http://schemas.openxmlformats.org/presentationml/2006/main',
+        }
+
+        # Look for videoFile in nvPicPr/nvPr (picture shapes)
+        videoFile = None
+        nvPr = None
+        if hasattr(element, 'nvPicPr') and element.nvPicPr is not None:
+            nvPr = element.nvPicPr.nvPr
+            videoFile = nvPr.find('.//a:videoFile', ns)
+
+        # Also check nvSpPr for other shape types
+        if videoFile is None and hasattr(element, 'nvSpPr') and element.nvSpPr is not None:
+            nvPr = element.nvSpPr.nvPr
+            videoFile = nvPr.find('.//a:videoFile', ns)
+
+        # Fallback: whole element tree
+        if videoFile is None:
+            videoFile = element.find('.//a:videoFile', ns)
+            if videoFile is not None:
+                nvPr = element.find('.//p:nvPr', ns)
+
+        if videoFile is None:
+            return None
+
+        video_title = shape.name if hasattr(shape, 'name') else "Video"
+
+        # External video URL (YouTube etc.)
+        video_link_rId = videoFile.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}link')
+        if video_link_rId:
+            try:
+                target = shape.part.target_ref(video_link_rId)
+                if target and (target.startswith('http://') or target.startswith('https://')):
+                    print(f"  Found external video: {target}")
+                    return {
+                        'type': 'video',
+                        'src': target,
+                        'title': video_title,
+                        'external': True
+                    }
+            except Exception:
+                pass
+
+        # Embedded video (p14:media)
+        if nvPr is not None:
+            p14_media = nvPr.find('.//p14:media', ns)
+            if p14_media is not None:
+                embed_rId = p14_media.get('{http://schemas.openxmlformats.org/officeDocument/2006/relationships}embed')
+                if embed_rId:
+                    try:
+                        video_part = shape.part.related_part(embed_rId)
+                        if video_part and hasattr(video_part, 'blob'):
+                            content_type = video_part.content_type if hasattr(video_part, 'content_type') else 'video/mp4'
+                            ext_map = {
+                                'video/mp4': '.mp4',
+                                'video/x-m4v': '.m4v',
+                                'video/webm': '.webm',
+                                'video/quicktime': '.mov',
+                                'video/x-msvideo': '.avi',
+                            }
+                            ext = ext_map.get(content_type, '.mp4')
+                            video_filename = f"slide_{slide_num}_{shape.shape_id}{ext}"
+                            video_path = media_dir / video_filename
+                            with open(video_path, 'wb') as f:
+                                f.write(video_part.blob)
+                            print(f"  Extracted embedded video: {video_filename}")
+                            return {
+                                'type': 'video',
+                                'src': f"./{video_filename}",
+                                'title': video_title
+                            }
+                    except Exception as e:
+                        print(f"  Warning: Could not extract embedded video blob: {e}")
+
+    except Exception as e:
+        print(f"  Warning: Could not extract video info: {e}")
+    return None
+
+
 def process_slide(slide, slide_num, media_dir):
     """Process a single slide and extract its content."""
     content = []
@@ -586,6 +922,12 @@ def process_slide(slide, slide_num, media_dir):
 
     # Process shapes
     for idx, shape in enumerate(shapes):
+        # Check for video in ANY shape type first (before other checks)
+        video_content = extract_video(shape, media_dir, slide_num)
+        if video_content:
+            content.append(video_content)
+            # Don't skip - shape may also have poster image or text
+
         # Title
         if shape.is_placeholder:
             placeholder_type = shape.placeholder_format.type
@@ -593,11 +935,12 @@ def process_slide(slide, slide_num, media_dir):
                 if shape.has_text_frame:
                     title = shape.text_frame.text.strip()
                     # Clean up special characters
-                    title = title.replace('\x0b', ' ').strip()
-                continue
+                    title = title.replace('\x0b', '\n').strip()
+                continue  # Only skip title placeholders (1, 3)
+            # Non-title placeholders (body, media, subtitle, etc.) fall through to content extraction
 
-        # Images
-        if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
+        # Images - use hasattr check to catch placeholder images (type 14) too
+        if hasattr(shape, 'image') and hasattr(shape.image, 'blob'):
             img_content = extract_image(shape, media_dir, slide_num, idx, title)
             if img_content:
                 content.append(img_content)
@@ -615,6 +958,12 @@ def process_slide(slide, slide_num, media_dir):
                     'text': '\n'.join(table_text),
                     'level': 3
                 })
+            continue
+
+        # SmartArt diagrams (graphicFrame with diagram namespace)
+        smart_art_block = extract_smart_art(shape, slide, media_dir)
+        if smart_art_block:
+            content.append(smart_art_block)
             continue
 
         # Auto shapes (arrows, connectors, symbols)
@@ -668,14 +1017,10 @@ def process_slide(slide, slide_num, media_dir):
                         'items': items
                     })
 
-    # Determine layout based on content
-    layout = "Title and Content"
-    if not content:
-        layout = "Title Only" if title else "Blank"
-    elif any(c['type'] == 'image' for c in content):
-        layout = "Two Content"
+    # Use actual PowerPoint layout name
+    layout = slide.slide_layout.name
 
-    return {
+    result = {
         'order': slide_num,
         'title': title or f"Slide {slide_num}",
         'layout': layout,
@@ -683,9 +1028,86 @@ def process_slide(slide, slide_num, media_dir):
         'content': content
     }
 
+    # Extract layout background image for title/final slides
+    # These slides often have a background image in the slide layout, not the slide itself
+    layout_lower = layout.lower()
+    if 'title slide' in layout_lower or 'image background' in layout_lower:
+        bg_image = extract_layout_background(slide.slide_layout, media_dir, slide_num)
+        if bg_image:
+            result['layout_background'] = bg_image
+
+    return result
+
+
+def extract_native_sections(prs):
+    """Extract sections from the PPTX file's native section structure.
+
+    PowerPoint stores sections in p14:sectionLst inside presentation.xml.
+    Returns a list of {title, slide_ids} or None if no sections found.
+    """
+    from pptx.oxml.ns import qn
+
+    # Build slide_id -> slide_order mapping
+    slide_id_to_order = {}
+    for idx, slide in enumerate(prs.slides, 1):
+        slide_id_to_order[slide.slide_id] = idx
+
+    nsmap = {
+        'p': 'http://schemas.openxmlformats.org/presentationml/2006/main',
+        'p14': 'http://schemas.microsoft.com/office/powerpoint/2010/main',
+    }
+
+    try:
+        ext_lst = prs.element.find('./p:extLst', namespaces=nsmap)
+        if ext_lst is None:
+            return None
+
+        for ext in ext_lst.findall('./p:ext', namespaces=nsmap):
+            section_list = ext.find('.//p14:sectionLst', namespaces=nsmap)
+            if section_list is not None:
+                sections = []
+                for section_el in section_list.findall('./p14:section', namespaces=nsmap):
+                    name = section_el.get('name', 'Untitled Section')
+                    slide_orders = []
+                    sld_id_lst = section_el.find('./p14:sldIdLst', namespaces=nsmap)
+                    if sld_id_lst is not None:
+                        for sld_id_tag in sld_id_lst.findall('./p14:sldId', namespaces=nsmap):
+                            sid = int(sld_id_tag.get('id'))
+                            if sid in slide_id_to_order:
+                                slide_orders.append(slide_id_to_order[sid])
+                    if slide_orders:
+                        sections.append({'title': name, 'slide_orders': sorted(slide_orders)})
+                if sections:
+                    return sections
+    except Exception as e:
+        print(f"  Warning: Could not extract native sections: {e}")
+
+    return None
+
 
 def detect_sections(prs, slides_data):
-    """Attempt to detect sections from slide content."""
+    """Extract sections from PPTX file. Uses native PowerPoint sections if available,
+    falls back to layout-based heuristic detection."""
+
+    # Try native sections first
+    native = extract_native_sections(prs)
+    if native:
+        print(f"  Using native PowerPoint sections ({len(native)} found)")
+        # Build order -> slide_data lookup
+        order_to_data = {s['order']: s for s in slides_data}
+
+        sections = []
+        for sec in native:
+            section_slides = [order_to_data[o] for o in sec['slide_orders'] if o in order_to_data]
+            if section_slides:
+                sections.append({
+                    'title': sec['title'],
+                    'slides': section_slides
+                })
+        return sections
+
+    # Fallback: heuristic detection from layout names
+    print("  No native sections found, using layout-based detection")
     sections = []
     current_section = {
         'title': 'Main Content',
@@ -693,14 +1115,13 @@ def detect_sections(prs, slides_data):
     }
 
     for slide_data in slides_data:
-        # Check if this looks like a section header
         is_section_header = (
-            slide_data['layout'] == 'Title Only' or
-            (len(slide_data['content']) == 0 and slide_data['title'])
+            'section heading' in slide_data['layout'].lower() or
+            (len(slide_data['content']) == 0 and slide_data['title'] and
+             any(kw in slide_data['layout'].lower() for kw in ['title only', 'title slide', 'full blue background']))
         )
 
         if is_section_header and current_section['slides']:
-            # Start new section
             sections.append(current_section)
             current_section = {
                 'title': slide_data['title'],
@@ -709,7 +1130,6 @@ def detect_sections(prs, slides_data):
         else:
             current_section['slides'].append(slide_data)
 
-    # Add final section
     if current_section['slides']:
         sections.append(current_section)
 
@@ -756,6 +1176,7 @@ def extract_pptx(input_path, output_dir):
     # Count media files
     media_files = list(media_dir.glob('*'))
     image_count = len([f for f in media_files if f.suffix.lower() in ['.png', '.jpg', '.jpeg', '.gif']])
+    video_count = len([f for f in media_files if f.suffix.lower() in ['.mp4', '.m4v', '.webm', '.mov', '.avi']])
 
     # Build output structure
     output = {
@@ -765,7 +1186,8 @@ def extract_pptx(input_path, output_dir):
             'processed_at': datetime.now().isoformat(),
             'stats': {
                 'slide_count': len(slides_data),
-                'image_count': image_count
+                'image_count': image_count,
+                'video_count': video_count
             }
         },
         'sections': sections
@@ -783,6 +1205,7 @@ def extract_pptx(input_path, output_dir):
     print(f"Slides extracted: {len(slides_data)}")
     print(f"Sections detected: {len(sections)}")
     print(f"Images extracted: {image_count}")
+    print(f"Videos extracted: {video_count}")
     print(f"Output JSON: {json_path}")
     print(f"Media folder: {media_dir}")
     print()

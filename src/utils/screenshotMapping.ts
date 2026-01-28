@@ -42,7 +42,7 @@ export function getScreenshotPath(slideOrder: number): string | null {
   if (screenshotNumber === null) {
     return null;
   }
-  return `/assets/images/slides/slide_${String(screenshotNumber).padStart(4, '0')}.png`;
+  return `/assets/screenshots/screenshot_${screenshotNumber}.png`;
 }
 
 /**

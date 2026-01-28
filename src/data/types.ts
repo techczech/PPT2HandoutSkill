@@ -24,6 +24,7 @@ export interface Slide {
   layout: string;
   notes: string;
   content: ContentBlock[];
+  layout_background?: string;
 }
 
 export type ContentBlock =
@@ -38,6 +39,7 @@ export interface HeadingContent {
   type: 'heading';
   text: string;
   level: number;
+  runs?: TextRun[];
 }
 
 export interface ListContent {

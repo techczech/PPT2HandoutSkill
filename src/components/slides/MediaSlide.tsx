@@ -63,9 +63,20 @@ export default function MediaSlide({ slide }: MediaSlideProps) {
           {slide.title}
         </h2>
       </div>
-      {/* Content area - media left, description right */}
+      {/* Content area - description left, media right */}
       <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
-        {/* Media area - left side */}
+        {/* Description box - left side, gray background, vertically centered */}
+        <div
+          className="lg:w-2/5 shrink-0 flex items-center p-6 md:p-8"
+          style={{ background: 'var(--color-muted, #f3f4f6)' }}
+        >
+          <div className="space-y-4 w-full">
+            {textContent.map((content, index) => (
+              <ContentRenderer key={index} content={content} size="large" noBullets />
+            ))}
+          </div>
+        </div>
+        {/* Media area - right side */}
         <div className="flex-1 flex items-center justify-center p-4 md:p-6 overflow-hidden">
           {hasMedia ? (
             <MediaGallery images={imageContent} videos={videoContent} />
@@ -78,17 +89,6 @@ export default function MediaSlide({ slide }: MediaSlideProps) {
               ))}
             </div>
           )}
-        </div>
-        {/* Description box - right side, gray background, vertically centered */}
-        <div
-          className="lg:w-2/5 shrink-0 flex items-center p-6 md:p-8"
-          style={{ background: 'var(--color-muted, #f3f4f6)' }}
-        >
-          <div className="space-y-4 w-full">
-            {textContent.map((content, index) => (
-              <ContentRenderer key={index} content={content} size="large" />
-            ))}
-          </div>
         </div>
       </div>
     </div>

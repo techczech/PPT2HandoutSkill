@@ -5,6 +5,7 @@ interface BulletListProps {
   content: ListContent;
   theme?: 'light' | 'dark';
   size?: 'default' | 'large' | 'featured';
+  noBullets?: boolean;
 }
 
 // Size classes for different contexts
@@ -83,7 +84,7 @@ function ListItemComponent({
   );
 }
 
-export default function BulletList({ content, theme = 'light', size = 'default' }: BulletListProps) {
+export default function BulletList({ content, theme = 'light', size = 'default', noBullets = false }: BulletListProps) {
   const isNumbered = content.style === 'numbered';
   const items = content.items;
   const textSize = sizeClasses[size];
@@ -97,6 +98,23 @@ export default function BulletList({ content, theme = 'light', size = 'default' 
       >
         <FormattedText runs={items[0].runs} fallbackText={items[0].text} />
       </p>
+    );
+  }
+
+  // No bullets mode: render as plain paragraphs
+  if (noBullets) {
+    return (
+      <div className="space-y-3">
+        {items.map((item, index) => (
+          <p
+            key={index}
+            className={`${textSize} leading-relaxed`}
+            style={{ color: theme === 'dark' ? 'inherit' : 'var(--color-text)' }}
+          >
+            <FormattedText runs={item.runs} fallbackText={item.text} />
+          </p>
+        ))}
+      </div>
     );
   }
 

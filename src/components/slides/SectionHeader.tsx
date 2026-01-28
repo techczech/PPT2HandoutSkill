@@ -26,7 +26,7 @@ export default function SectionHeader({ slide }: SectionHeaderProps) {
         </p>
         <h2
           className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight"
-          style={{ fontFamily: 'var(--font-serif)' }}
+          style={{ fontFamily: 'var(--font-sans)' }}
         >
           {slide.title}
         </h2>

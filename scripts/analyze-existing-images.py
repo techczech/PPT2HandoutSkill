@@ -107,6 +107,8 @@ def get_ollama_model_families(model_name: str) -> list[str]:
 
 def is_ollama_vision_model(families: list[str]) -> bool:
     """Check if Ollama model families indicate vision capability."""
+    if not families:
+        return False
     vision_indicators = ["clip", "mllama"]
     for family in families:
         family_lower = family.lower()

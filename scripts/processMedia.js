@@ -82,11 +82,13 @@ if (fs.existsSync(mediaBaseDir)) {
 const DEST_IMAGES_SLIDES = path.join(ROOT_DIR, 'public/assets/images/slides');
 const DEST_IMAGES_ICONS = path.join(ROOT_DIR, 'public/assets/images/icons');
 const DEST_VIDEOS = path.join(ROOT_DIR, 'public/assets/videos');
+const DEST_SCREENSHOTS = path.join(ROOT_DIR, 'public/assets/screenshots');
 const PRESENTATION_JSON = path.join(ROOT_DIR, 'sourcematerials/presentation.json');
 const DATA_OUTPUT = path.join(ROOT_DIR, 'src/data/presentation.json');
+const SCREENSHOTS_DIR = path.join(ROOT_DIR, 'sourcematerials/screenshots');
 
 // Create directories
-[DEST_IMAGES_SLIDES, DEST_IMAGES_ICONS, DEST_VIDEOS].forEach(dir => {
+[DEST_IMAGES_SLIDES, DEST_IMAGES_ICONS, DEST_VIDEOS, DEST_SCREENSHOTS].forEach(dir => {
   fs.mkdirSync(dir, { recursive: true });
 });
 
@@ -149,6 +151,24 @@ if (SOURCE_DIR && fs.existsSync(SOURCE_DIR)) {
   console.log(`  - Videos: ${videoCount}${compressedCount > 0 ? ` (${compressedCount} compressed)` : ''}`);
 } else {
   console.log('Source media directory not found, skipping media copy...');
+}
+
+// Copy screenshots if available
+if (fs.existsSync(SCREENSHOTS_DIR)) {
+  const screenshots = fs.readdirSync(SCREENSHOTS_DIR).filter(f =>
+    ['.png', '.jpg', '.jpeg'].includes(path.extname(f).toLowerCase())
+  );
+  let screenshotCount = 0;
+  screenshots.forEach(file => {
+    fs.copyFileSync(
+      path.join(SCREENSHOTS_DIR, file),
+      path.join(DEST_SCREENSHOTS, file)
+    );
+    screenshotCount++;
+  });
+  console.log(`  - Screenshots: ${screenshotCount}`);
+} else {
+  console.log('  - Screenshots: none (run generate-screenshots.py to create them)');
 }
 
 // Copy and transform presentation JSON
@@ -240,8 +260,9 @@ if (fs.existsSync(PRESENTATION_JSON)) {
       slides: section.slides.map(slide => ({
         ...slide,
         // Clean up special characters in titles
-        title: slide.title ? slide.title.replace(/\u000b/g, ' ') : slide.title,
-        content: transformContent(slide.content)
+        title: slide.title ? slide.title.replace(/\u000b/g, '\n') : slide.title,
+        content: transformContent(slide.content),
+        layout_background: transformPath(slide.layout_background)
       }))
     }))
   };

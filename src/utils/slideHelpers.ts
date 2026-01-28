@@ -41,7 +41,7 @@ export function getLayoutCategory(layout: string, slideTitle?: string): 'title' 
   }
 
   // Special case: final/thank you slide
-  if (lowerLayout.includes('final') || lowerTitle === 'thank you') {
+  if (lowerLayout.includes('final') || lowerTitle === 'thank you' || lowerTitle.startsWith('questions')) {
     return 'final';
   }
 
@@ -51,7 +51,7 @@ export function getLayoutCategory(layout: string, slideTitle?: string): 'title' 
   if (lowerLayout.includes('title slide') || lowerLayout === 'title only (for single text lines)' || lowerLayout === 'title only') {
     return 'title';
   }
-  if (lowerLayout.includes('sidebar') || lowerLayout.includes('side bar') || lowerLayout.includes('half page') || lowerLayout === 'two content') {
+  if (lowerLayout.includes('sidebar') || lowerLayout.includes('side bar') || lowerLayout.includes('half page')) {
     return 'sidebar';
   }
   if (lowerLayout.includes('image') || lowerLayout.includes('screenshot') || lowerLayout.includes('video')) {
