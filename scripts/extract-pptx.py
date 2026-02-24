@@ -403,7 +403,7 @@ def extract_auto_shape(shape, animation_map):
         return None
 
 
-def extract_smart_art(shape, slide, media_dir):
+def extract_smart_art(shape, slide, media_dir, slide_num=None):
     """Extract SmartArt diagram content from a graphicFrame shape.
 
     Extracts node hierarchy, layout name, and icon images (sa_ prefix files).
@@ -429,6 +429,10 @@ def extract_smart_art(shape, slide, media_dir):
         dm_rid = dgm_els[0].get('{%s}dm' % ns_r)
         if not dm_rid or dm_rid not in slide.part.rels:
             return None
+
+        shape_id = getattr(shape, 'shape_id', 'shape')
+        prefix = f"slide{slide_num if slide_num is not None else 'x'}_sh{shape_id}_{dm_rid}"
+        prefix = re.sub(r'[^A-Za-z0-9_]', '_', prefix)
 
         rel = slide.part.rels[dm_rid]
         data_part = rel.target_part
@@ -460,7 +464,7 @@ def extract_smart_art(shape, slide, media_dir):
                         img_part = data_part.related_part(rid)
                         ext = img_part.content_type.split('/')[-1].replace('x-', '').replace('+xml', '')
                         safe_mid = mid.replace('{', '').replace('}', '').replace('-', '')
-                        fname = f"sa_{safe_mid}.{ext}"
+                        fname = f"sa_{prefix}_{safe_mid}.{ext}"
                         fpath = os.path.join(str(media_dir), fname)
                         with open(fpath, 'wb') as f:
                             f.write(img_part.blob)
@@ -898,6 +902,16 @@ def extract_video(shape, media_dir, slide_num):
     return None
 
 
+def is_diagram_graphic_shape(shape):
+    """Return True only for shapes with DiagramML graphic data (SmartArt)."""
+    try:
+        element = shape.element if hasattr(shape, 'element') else shape._element
+        graphic_data = element.graphic.graphicData
+        return graphic_data.get('uri') == "http://schemas.openxmlformats.org/drawingml/2006/diagram"
+    except AttributeError:
+        return False
+
+
 def process_slide(slide, slide_num, media_dir):
     """Process a single slide and extract its content."""
     content = []
@@ -960,11 +974,12 @@ def process_slide(slide, slide_num, media_dir):
                 })
             continue
 
-        # SmartArt diagrams (graphicFrame with diagram namespace)
-        smart_art_block = extract_smart_art(shape, slide, media_dir)
-        if smart_art_block:
-            content.append(smart_art_block)
-            continue
+        # SmartArt diagrams (diagram graphic data)
+        if is_diagram_graphic_shape(shape):
+            smart_art_block = extract_smart_art(shape, slide, media_dir, slide_num)
+            if smart_art_block:
+                content.append(smart_art_block)
+                continue
 
         # Auto shapes (arrows, connectors, symbols)
         shape_block = extract_auto_shape(shape, animation_map)
