@@ -1,41 +1,53 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
+import { lectureNotes } from '../data/lectureNotes';
 
 interface KeyboardShortcutsModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const shortcuts = [
-  { category: 'Navigation', items: [
-    { keys: ['h'], description: 'Go to Home' },
-    { keys: ['s'], description: 'Go to Slides' },
-    { keys: ['o'], description: 'Go to Slides (outline view)' },
-    { keys: ['i'], description: 'Go to Index' },
-    { keys: ['t'], description: 'Go to Activities' },
-    { keys: ['m'], description: 'Go to Media Gallery' },
-    { keys: ['a'], description: 'Go to About' },
-  ]},
-  { category: 'Slide Navigation (on Slides page)', items: [
-    { keys: ['←', '→'], description: 'Previous / Next slide' },
-    { keys: ['Space'], description: 'Next slide' },
-    { keys: ['↑', '↓'], description: 'Previous / Next section' },
-    { keys: ['Home', 'End'], description: 'First / Last slide' },
-    { keys: ['g'], description: 'Go to slide number' },
-    { keys: ['c'], description: 'Content view' },
-    { keys: ['o'], description: 'Outline view' },
-    { keys: ['d'], description: 'Grid view' },
-    { keys: ['v'], description: 'Toggle rendered/screenshot mode' },
-    { keys: ['Esc'], description: 'Return to content view' },
-  ]},
-  { category: 'Other', items: [
-    { keys: ['/'], description: 'Open search' },
-    { keys: ['?'], description: 'Show keyboard shortcuts' },
-    { keys: ['Esc'], description: 'Close modal' },
-  ]},
-];
+function useShortcuts() {
+  return useMemo(() => {
+    const navItems = [
+      { keys: ['h'], description: 'Go to Home' },
+      { keys: ['s'], description: 'Go to Slides' },
+      { keys: ['o'], description: 'Go to Slides (outline view)' },
+      { keys: ['i'], description: 'Go to Index' },
+      { keys: ['t'], description: 'Go to Activities' },
+      { keys: ['m'], description: 'Go to Media Gallery' },
+      { keys: ['a'], description: 'Go to About' },
+    ];
+
+    if (lectureNotes.length > 0) {
+      navItems.push({ keys: ['n'], description: 'Go to Lecture Notes' });
+    }
+
+    return [
+      { category: 'Navigation', items: navItems },
+      { category: 'Slide Navigation (on Slides page)', items: [
+        { keys: ['←', '→'], description: 'Previous / Next slide' },
+        { keys: ['Space'], description: 'Next slide' },
+        { keys: ['↑', '↓'], description: 'Previous / Next section' },
+        { keys: ['Home', 'End'], description: 'First / Last slide' },
+        { keys: ['g'], description: 'Go to slide number' },
+        { keys: ['c'], description: 'Content view' },
+        { keys: ['o'], description: 'Outline view' },
+        { keys: ['d'], description: 'Grid view' },
+        { keys: ['v'], description: 'Toggle rendered/screenshot mode' },
+        { keys: ['Esc'], description: 'Return to content view' },
+      ]},
+      { category: 'Other', items: [
+        { keys: ['/'], description: 'Open search' },
+        { keys: ['?'], description: 'Show keyboard shortcuts' },
+        { keys: ['Esc'], description: 'Close modal' },
+      ]},
+    ];
+  }, []);
+}
 
 export default function KeyboardShortcutsModal({ isOpen, onClose }: KeyboardShortcutsModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
+  const shortcuts = useShortcuts();
 
   // Handle clicking outside
   useEffect(() => {

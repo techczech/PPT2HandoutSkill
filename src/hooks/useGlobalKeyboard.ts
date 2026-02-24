@@ -1,5 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { lectureNotes } from '../data/lectureNotes';
 
 interface GlobalKeyboardState {
   isSearchOpen: boolean;
@@ -119,6 +120,15 @@ export function useGlobalKeyboard(): GlobalKeyboardState {
           if (!event.ctrlKey && !event.metaKey) {
             event.preventDefault();
             navigate('/about');
+          }
+          break;
+
+        // Lecture Notes: n
+        case 'n':
+        case 'N':
+          if (!event.ctrlKey && !event.metaKey && lectureNotes.length > 0) {
+            event.preventDefault();
+            navigate('/lecture-notes');
           }
           break;
       }

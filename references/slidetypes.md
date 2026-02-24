@@ -55,10 +55,30 @@ Slides are classified based on two main factors:
 - `Screenshot description` (5 slides)
 - `Hidden title for image or SmartArt` (1 slide)
 
-Media slides are classified into two sub-types based on whether they have description text:
+Media slides are classified into four sub-types based on content combinations:
 
-#### 5a. Media Only (No Description)
-**Detection**: No list/text content, just images/videos
+#### 5a. Media + SmartArt
+**Detection**: Has both images/videos AND SmartArt content
+**Rendering**:
+- Blue strip at top with white title text
+- Left: Media (images/videos) centered
+- Right (40%): SmartArt + any text content
+
+```
+┌────────────────────────────────────────────────────┐
+│            Title Text (white on blue)              │
+├────────────────────────────────────────────────────┤
+│                           │                        │
+│    ┌────────────────┐     │  SmartArt diagram      │
+│    │     Image      │     │                        │
+│    │    or Video    │     │  Text content           │
+│    └────────────────┘     │                        │
+│                           │                        │
+└────────────────────────────────────────────────────┘
+```
+
+#### 5b. Media Only (No Description)
+**Detection**: No list/text/SmartArt content, just images/videos
 **Rendering**:
 - Blue strip at top with white title text (similar to quote slide bottom bar)
 - Media (images/videos) centered in remaining space
@@ -77,13 +97,31 @@ Media slides are classified into two sub-types based on whether they have descri
 └────────────────────────────────────────────────────┘
 ```
 
-#### 5b. Media with Description
+#### 5c. SmartArt Only
+**Detection**: Has SmartArt but no images/videos and no description text
+**Rendering**:
+- Blue strip at top with white title text
+- SmartArt centered below with max-width constraint
+
+```
+┌────────────────────────────────────────────────────┐
+│            Title Text (white on blue)              │
+├────────────────────────────────────────────────────┤
+│                                                    │
+│        ┌──────────────────────────┐                │
+│        │     SmartArt Diagram     │                │
+│        └──────────────────────────┘                │
+│                                                    │
+└────────────────────────────────────────────────────┘
+```
+
+#### 5d. Media with Description
 **Detection**: Has list/text content alongside images/videos
 **Layout examples**: `Video with description`, `Screenshot description`
 **Rendering**:
 - Blue strip at top with white title text
-- Left side: Media (images/videos) centered
-- Right side: Gray box (~40% width) with description text, left-aligned, vertically centered
+- Left side: Gray box (~40% width) with description text, left-aligned, vertically centered
+- Right side: Media (images/videos) centered
 - Description box adapts height to content
 
 ```
@@ -91,16 +129,18 @@ Media slides are classified into two sub-types based on whether they have descri
 │            Title Text (white on blue)              │
 ├────────────────────────────────────────────────────┤
 │                           │                        │
-│    ┌────────────────┐     │  Description text      │
-│    │     Image      │     │  in gray box           │
-│    │    or Video    │     │                        │
-│    └────────────────┘     │  • Bullet points       │
-│                           │  • URL                 │
+│  Description text         │  ┌────────────────┐   │
+│  in gray box              │  │     Image      │   │
+│                           │  │    or Video    │   │
+│  • Bullet points          │  └────────────────┘   │
+│  • URL                    │                        │
 │                           │                        │
 └────────────────────────────────────────────────────┘
 ```
 
 **Note**: The gray description box uses `var(--color-muted, #f3f4f6)` for background, providing visual separation from the media area while maintaining readability.
+
+**Note**: The heading filter in MediaSlide uses a smart filter that keeps headings not matching the slide title, since PowerPoint sometimes classifies body text as heading content blocks.
 
 ### 6. Content Slides (Default)
 **Detection**: Layout contains "title only", "text only", or doesn't match other categories

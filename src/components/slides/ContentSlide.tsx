@@ -53,7 +53,10 @@ function FormattedTitle({ text, className, style }: { text: string; className?: 
 }
 
 export default function ContentSlide({ slide }: ContentSlideProps) {
-  const contentItems = slide.content.filter(c => c.type !== 'heading');
+  // Keep headings that aren't duplicates of the slide title (body text is often classified as heading)
+  const contentItems = slide.content.filter(c =>
+    c.type !== 'heading' || ('text' in c && c.text !== slide.title)
+  );
   const hasContent = contentItems.length > 0;
 
   // Separate media from other content

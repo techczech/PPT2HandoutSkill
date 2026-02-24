@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
 import { sessionInfo } from '../../data/sessionInfo';
+import { lectureNotes } from '../../data/lectureNotes';
 
 interface SiteHeaderProps {
   onOpenSearch?: () => void;
@@ -60,6 +61,15 @@ export default function SiteHeader({ onOpenSearch, onOpenHelp }: SiteHeaderProps
           >
             <u>A</u>bout
           </Link>
+          {lectureNotes.length > 0 && (
+            <Link
+              to="/lecture-notes"
+              className={isActive('/lecture-notes') ? 'active' : ''}
+              title="Lecture Notes (n)"
+            >
+              <u>N</u>otes
+            </Link>
+          )}
 
           {/* Divider */}
           <div

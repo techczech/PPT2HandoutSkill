@@ -437,6 +437,85 @@ video {
   text-decoration: underline;
 }
 
+/* Lecture narrative prose styles */
+.lecture-narrative {
+  line-height: 1.75;
+  color: var(--color-text);
+}
+
+.lecture-narrative p {
+  margin-bottom: 1rem;
+}
+
+.lecture-narrative p:last-child {
+  margin-bottom: 0;
+}
+
+.lecture-narrative strong {
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.lecture-narrative em {
+  font-style: italic;
+}
+
+.lecture-narrative a {
+  color: var(--color-primary-light);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.2s ease;
+}
+
+.lecture-narrative a:hover {
+  color: var(--color-accent);
+}
+
+.lecture-narrative a.slide-link {
+  color: var(--color-accent);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.1em 0.4em;
+  background: rgba(224, 122, 56, 0.1);
+  border-radius: 0.25rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.lecture-narrative a.slide-link:hover {
+  background: rgba(224, 122, 56, 0.2);
+  color: var(--color-primary);
+}
+
+.lecture-narrative h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.lecture-narrative h3:first-child {
+  margin-top: 0;
+}
+
+.lecture-narrative ul {
+  margin-bottom: 1rem;
+  padding-left: 1.25rem;
+  list-style: disc;
+}
+
+.lecture-narrative ul li {
+  margin-bottom: 0.25rem;
+  line-height: 1.6;
+}
+
+.lecture-narrative code {
+  font-size: 0.9em;
+  padding: 0.1em 0.35em;
+  background: var(--color-surface);
+  border-radius: 0.25rem;
+}
+
 /* Footer */
 .site-footer {
   background: var(--color-primary);

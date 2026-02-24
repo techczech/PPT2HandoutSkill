@@ -8,7 +8,10 @@ interface SidebarSlideProps {
 }
 
 export default function SidebarSlide({ slide }: SidebarSlideProps) {
-  const contentItems = slide.content.filter(c => c.type !== 'heading');
+  // Keep headings that aren't duplicates of the slide title (body text is often classified as heading)
+  const contentItems = slide.content.filter(c =>
+    c.type !== 'heading' || ('text' in c && c.text !== slide.title)
+  );
 
   // Separate media from other content
   const imageContent = contentItems.filter(c => c.type === 'image') as ImageContent[];
@@ -17,10 +20,12 @@ export default function SidebarSlide({ slide }: SidebarSlideProps) {
   const listContent = contentItems.filter(c => c.type === 'list');
   const shapeContent = contentItems.filter(c => c.type === 'shape') as ShapeContent[];
 
+  const headingContent = contentItems.filter(c => c.type === 'heading');
+
   const hasMedia = imageContent.length > 0 || videoContent.length > 0;
   const hasSmartArt = smartArtContent.length > 0;
   const hasShapes = shapeContent.length > 0;
-  const hasText = listContent.length > 0;
+  const hasText = listContent.length > 0 || headingContent.length > 0;
 
   // Special case: SmartArt + shape = three-zone layout (sidebar | shape | smartart)
   // e.g., slide 45 "Large Language Models" with ≠ symbol

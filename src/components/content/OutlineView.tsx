@@ -137,7 +137,7 @@ function buildOutline(sections: Section[]): OutlineNode[] {
         };
 
         slide.content
-          .filter(c => c.type !== 'heading')
+          .filter(c => c.type !== 'heading' || ('text' in c && c.text !== slide.title))
           .forEach(content => {
             const contentNodes = extractContentText(content);
             slideNode.children!.push(...contentNodes);

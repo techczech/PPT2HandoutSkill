@@ -306,6 +306,16 @@ npx wrangler pages deploy dist --project-name=<project-name>
 
 After deployment, provide the live URL to the user.
 
+### Step 10: Add Lecture Notes (Optional)
+
+If a transcript of the presentation is available (recording, MacWhisper export, SRT/VTT file, or plain text):
+
+```
+/LectureNotesSkill <path-to-transcript>
+```
+
+This generates narrative lecture notes from the transcript, mapped to presentation sections. The Notes link appears automatically in the nav bar once `lectureNotes.ts` is populated. See the [LectureNotesSkill](/LectureNotesSkill) for full details.
+
 ---
 
 ## Setting Up a New Project
@@ -330,4 +340,5 @@ Then proceed with Step 1.
 
 - [Entities Format](references/entities-format.md) - JSON schema and image categories
 - [Customization](references/customization.md) - Colors, fonts, sessionInfo, file structure
+- [Slide Types](references/slidetypes.md) - Layout detection and rendering rules
 - [Troubleshooting](references/troubleshooting.md) - Common issues and fixes
