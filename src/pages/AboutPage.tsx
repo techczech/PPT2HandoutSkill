@@ -180,7 +180,7 @@ export default function AboutPage() {
             <h2 className="text-xl font-semibold mb-3">AI Image Analysis</h2>
             <p className="text-gray-700 mb-4">
               Images in this presentation were analyzed using{' '}
-              {processingStats?.model || 'Gemini 3 Flash Preview'}
+              {processingStats?.model || 'Qwen 3 VL 30B'}
               {processingStats?.processedAt && (
                 <> on {new Date(processingStats.processedAt).toLocaleDateString()}</>
               )}
