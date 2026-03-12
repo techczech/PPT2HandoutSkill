@@ -86,6 +86,12 @@ Read `sourcematerials/presentation.json` and analyze the content. Extract:
    - Count of images by type (photos, screenshots, diagrams, etc.)
    - Videos found and their sizes
 
+4. **Extraction quality assessment:**
+   - Count slides where content is mostly images/shapes with little or no extracted text
+   - Count empty decorative shapes (rectangles, ovals, arcs without text)
+   - Note if a high proportion of slides have limited text extraction (flag as "limited extraction")
+   - This assessment informs whether to suggest screenshot-primary mode in Step 4
+
 **Present this summary to the user before proceeding.**
 
 ### Step 4: Ask Clarifying Questions
@@ -102,6 +108,11 @@ Based on your analysis, use `AskUserQuestion` to gather missing or uncertain inf
 - Speaker bio (brief paragraph)
 - Event details (name, date, location) if this is for a conference
 - Any corrections to detected information
+
+**If extraction appears limited** (many image-heavy slides, decorative shapes, sparse text):
+3. **Screenshot-primary mode?** — The extraction captured limited text content from these slides. Would you like to use screenshot-primary mode? This makes the original slide screenshots the default view, renames the text view to "Slide Text", and hides empty decorative shapes.
+
+> The user can always choose screenshot-primary mode regardless of detection — the analysis just determines whether to proactively suggest it.
 
 **DO NOT ask about things you can confidently infer from the presentation.**
 
@@ -255,6 +266,27 @@ Fill in all fields you have data for. Leave optional fields empty (`""` or `[]`)
 
 ### Step 7: Build and Local Preview
 
+**If screenshot-primary mode was selected in Step 4, apply these changes before the first build:**
+
+1. **Set default display mode to screenshot** in `src/hooks/useSlideViewMode.tsx`:
+   - Change `useState<DisplayMode>('rendered')` → `useState<DisplayMode>('screenshot')`
+
+2. **Rename "Web View" to "Slide Text"** in these files:
+   - `src/components/layout/SlideContainer.tsx` — toggle button label (e.g., "Switch to Slide Text" / "Switch to Screenshot")
+   - `src/components/content/GridView.tsx` — grid toolbar label (e.g., "Slide Text" / "Screenshots")
+   - `src/components/PrintModal.tsx` — export option label
+   - `src/components/KeyboardShortcutsModal.tsx` — shortcut description (e.g., "Toggle slide text/screenshot mode")
+
+3. **Filter empty decorative shapes** in `src/components/content/ContentRenderer.tsx`:
+   - In the `'shape'` case, skip shapes that have no `text` property:
+     ```tsx
+     case 'shape': {
+       const shape = content as ShapeContent;
+       if (!(shape as ShapeContent & { text?: string }).text?.trim()) return null;
+       return <ShapeBlock content={shape} />;
+     }
+     ```
+
 ```bash
 npm run build  # Process media + compile + bundle
 npm run dev    # Start dev server
@@ -314,7 +346,7 @@ If a transcript of the presentation is available (recording, MacWhisper export, 
 /LectureNotesSkill <path-to-transcript>
 ```
 
-This generates narrative lecture notes from the transcript, mapped to presentation sections. The Notes link appears automatically in the nav bar once `lectureNotes.ts` is populated. See the [LectureNotesSkill](/LectureNotesSkill) for full details.
+This generates narrative lecture notes from the transcript, mapped to presentation sections. The Notes link appears automatically in the nav bar once `lectureNotes.ts` is populated. The Notes link should appear **right after Slides** in the nav order (Home → Slides → Notes → ...). If the template places it elsewhere, move the `lectureNotes.length > 0` block in `src/components/layout/SiteHeader.tsx` to after the Slides link. See the [LectureNotesSkill](/LectureNotesSkill) for full details.
 
 ---
 
