@@ -74,12 +74,15 @@ def get_lmstudio_models() -> list[dict]:
             data = json.loads(response.read().decode())
             models = []
             for m in data.get("data", []):
-                # type "vlm" indicates vision-language model
-                if m.get("type") == "vlm":
-                    models.append({"id": m["id"], "name": m.get("id", "Unknown")})
+                # Prefer VLMs but include all models (some text models handle images via API)
+                model_type = m.get("type", "")
+                name = m.get("id", "Unknown")
+                models.append({"id": m["id"], "name": name, "vision": model_type == "vlm"})
+            # Sort: vision models first, then alphabetical
+            models.sort(key=lambda x: (not x.get("vision", False), x["name"]))
             return models
     except (URLError, OSError, json.JSONDecodeError):
-        # Fall back to v1 API (no vision filtering)
+        # Fall back to v1 API (no type info available)
         try:
             req = Request(f"{LMSTUDIO_URL}/v1/models", method="GET")
             with urlopen(req, timeout=5) as response:

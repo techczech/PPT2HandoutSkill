@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import { sessionInfo } from '../data/sessionInfo';
+import SlidePreviewSidebar from '../components/SlidePreviewSidebar';
 
 // Import lecture notes data
 import { lectureNotes } from '../data/lectureNotes';
@@ -16,11 +17,17 @@ function toAnchorId(title: string): string {
 }
 
 /**
- * Parse the slide range string (e.g., "23-46") and return the first slide number.
+ * Parse a slide range string (e.g., "23-46") into an array of all slide numbers.
+ * Handles single numbers ("5") and ranges ("23-46").
  */
-function firstSlideFromRange(slideRange: string): number | null {
-  const match = slideRange.match(/(\d+)/);
-  return match ? parseInt(match[1], 10) : null;
+function expandSlideRange(slideRange: string): number[] {
+  const match = slideRange.match(/(\d+)(?:\s*[-–]\s*(\d+))?/);
+  if (!match) return [];
+  const start = parseInt(match[1], 10);
+  const end = match[2] ? parseInt(match[2], 10) : start;
+  const nums: number[] = [];
+  for (let i = start; i <= end; i++) nums.push(i);
+  return nums;
 }
 
 /**
@@ -92,20 +99,57 @@ function renderNarrative(narrative: string): string {
 }
 
 export default function LectureNotesPage() {
-  const navigate = useNavigate();
+  const [previewSlide, setPreviewSlide] = useState<number | null>(null);
+  const [isPinned, setIsPinned] = useState(true);
+  const [showSidebar, setShowSidebar] = useState(true);
   const sessionType = sessionInfo.event?.type || 'presentation';
+
+  // Open sidebar and set slide (used by slide links and section buttons)
+  const openSlide = useCallback((num: number) => {
+    setShowSidebar(true);
+    setPreviewSlide(num);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setShowSidebar(false);
+  }, []);
+
+  // Highlight the active slide link in narrative HTML
+  useEffect(() => {
+    document.querySelectorAll('.slide-link.active-preview')
+      .forEach(el => el.classList.remove('active-preview'));
+    if (previewSlide !== null) {
+      document.querySelectorAll(`a.slide-link[href="#/slides/${previewSlide}"]`)
+        .forEach(el => el.classList.add('active-preview'));
+    }
+  }, [previewSlide]);
 
   // Pre-render all narratives
   const sectionsWithHtml = useMemo(() => {
-    return lectureNotes.map(section => ({
-      ...section,
-      anchorId: toAnchorId(section.sectionTitle),
-      narrativeHtml: renderNarrative(section.narrative),
-      firstSlide: firstSlideFromRange(section.slideRange),
-    }));
+    return lectureNotes.map(section => {
+      const rangeSlides = expandSlideRange(section.slideRange);
+      return {
+        ...section,
+        anchorId: toAnchorId(section.sectionTitle),
+        narrativeHtml: renderNarrative(section.narrative),
+        slideNumbers: rangeSlides,
+      };
+    });
   }, []);
 
+  // Derive which section is active and its slide list
+  const activeSectionIndex = useMemo(() => {
+    if (previewSlide === null) return -1;
+    return sectionsWithHtml.findIndex(s => s.slideNumbers.includes(previewSlide));
+  }, [previewSlide, sectionsWithHtml]);
+
+  const currentSectionSlides = useMemo(() => {
+    if (activeSectionIndex < 0) return [];
+    return sectionsWithHtml[activeSectionIndex].slideNumbers;
+  }, [activeSectionIndex, sectionsWithHtml]);
+
   return (
+    <div className={`lecture-notes-wrapper${showSidebar && previewSlide !== null ? ' sidebar-open' : ''}`}>
     <div className="page-container">
       {/* Header */}
       <div className="hero">
@@ -196,23 +240,26 @@ export default function LectureNotesPage() {
                   {section.sectionTitle}
                 </h2>
               </div>
-              {section.firstSlide !== null && (
-                <Link
-                  to={`/slides/${section.firstSlide}`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors shrink-0"
-                  style={{
-                    background: 'var(--color-surface)',
-                    color: 'var(--color-primary)',
-                    border: '1px solid var(--color-border)',
-                  }}
-                  title={`Go to slide ${section.firstSlide}`}
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                  Slides {section.slideRange}
-                </Link>
-              )}
+              {section.slideNumbers.length > 0 && (() => {
+                const isSectionActive = showSidebar && activeSectionIndex === index;
+                return (
+                  <button
+                    onClick={() => {
+                      if (isSectionActive) {
+                        setShowSidebar(false);
+                      } else {
+                        openSlide(section.slideNumbers[0]);
+                      }
+                    }}
+                    className={`sidebar-toggle-btn${isSectionActive ? ' active' : ''}`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    {isSectionActive ? 'Hide Slides' : `Show Slides ${section.slideRange}`}
+                  </button>
+                );
+              })()}
             </div>
 
             {/* Narrative content */}
@@ -221,15 +268,16 @@ export default function LectureNotesPage() {
               style={{ maxWidth: 'var(--max-content-width)' }}
               dangerouslySetInnerHTML={{ __html: section.narrativeHtml }}
               onClick={(e) => {
-                // Intercept clicks on internal slide links for SPA navigation
                 const target = e.target as HTMLElement;
                 const anchor = target.closest('a[data-slide-link]') as HTMLAnchorElement | null;
                 if (anchor) {
                   e.preventDefault();
                   const href = anchor.getAttribute('href');
                   if (href) {
-                    // Strip leading # for HashRouter navigate()
-                    navigate(href.replace(/^#/, ''));
+                    const match = href.match(/\/slides\/(\d+)/);
+                    if (match) {
+                      openSlide(parseInt(match[1], 10));
+                    }
                   }
                 }
               }}
@@ -265,6 +313,17 @@ export default function LectureNotesPage() {
           </Link>
         </div>
       </div>
+    </div>
+    {showSidebar && previewSlide !== null && (
+      <SlidePreviewSidebar
+        slideNumber={previewSlide}
+        onClose={handleClose}
+        isPinned={isPinned}
+        onTogglePin={() => setIsPinned(p => !p)}
+        sectionSlides={currentSectionSlides}
+        onSlideChange={setPreviewSlide}
+      />
+    )}
     </div>
   );
 }

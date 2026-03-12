@@ -33,7 +33,7 @@ function useShortcuts() {
         { keys: ['c'], description: 'Content view' },
         { keys: ['o'], description: 'Outline view' },
         { keys: ['d'], description: 'Grid view' },
-        { keys: ['v'], description: 'Toggle rendered/screenshot mode' },
+        { keys: ['v'], description: 'Toggle slide text/screenshot mode' },
         { keys: ['Esc'], description: 'Return to content view' },
       ]},
       { category: 'Other', items: [

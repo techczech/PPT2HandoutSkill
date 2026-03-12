@@ -26,8 +26,12 @@ export default function ContentRenderer({ content, theme = 'light', fillSpace = 
       return <SmartArtDiagram content={content} fillSpace={fillSpace} theme={theme} />;
     case 'video':
       return <VideoPlayer content={content} />;
-    case 'shape':
-      return <ShapeBlock content={content as ShapeContent} />;
+    case 'shape': {
+      const shape = content as ShapeContent;
+      // Skip empty decorative shapes (rectangles, ovals, arcs, lines without text)
+      if (!(shape as ShapeContent & { text?: string }).text?.trim()) return null;
+      return <ShapeBlock content={shape} />;
+    }
     default:
       return null;
   }

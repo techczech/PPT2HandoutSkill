@@ -83,7 +83,7 @@ export default function GridView({ onSlideClick, onClose, displayMode }: GridVie
           <h2 className="text-lg font-bold" style={{ color: 'var(--color-primary)' }}>Slide Grid</h2>
           <span className="text-xs text-gray-400">{slides.length} slides</span>
           <span className="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-500">
-            {displayMode === 'rendered' ? 'Web View' : 'Screenshots'}
+            {displayMode === 'rendered' ? 'Slide Text' : 'Screenshots'}
           </span>
         </div>
         <div className="flex items-center gap-3">

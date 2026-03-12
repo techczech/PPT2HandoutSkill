@@ -19,7 +19,7 @@ interface FilterTab {
 const FILTER_TABS: FilterTab[] = [
   { id: 'all', label: 'All', icon: '📋', color: '#64748b' },
   { id: 'person', label: 'People', icon: '👤', color: '#6366f1' },
-  { id: 'organization', label: 'Companies', icon: '🏢', color: '#0891b2' },
+  { id: 'organization', label: 'Organizations', icon: '🏢', color: '#0891b2' },
   { id: 'place', label: 'Places', icon: '📍', color: '#059669' },
   { id: 'date', label: 'Dates', icon: '📅', color: '#d97706' },
   { id: 'quote', label: 'Quotes', icon: '💬', color: '#7c3aed' },

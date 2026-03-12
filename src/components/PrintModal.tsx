@@ -109,9 +109,9 @@ export default function PrintModal({ isOpen, onClose }: PrintModalProps) {
                 className="mt-1"
               />
               <div>
-                <div className="font-medium">Slide Web View</div>
+                <div className="font-medium">Slide Text</div>
                 <div className="text-sm text-gray-500">
-                  Export the formatted web view with proper text, lists, and images
+                  Export the formatted slide text with proper text, lists, and images
                 </div>
               </div>
             </label>

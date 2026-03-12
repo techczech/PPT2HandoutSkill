@@ -78,7 +78,7 @@ export default function SlideContainer({ slide }: SlideContainerProps) {
               }`}
               title="Toggle screenshot/rendered (V)"
             >
-              {displayMode === 'screenshot' ? 'Switch to Web View' : 'Switch to Screenshot'}
+              {displayMode === 'screenshot' ? 'Switch to Slide Text' : 'Switch to Screenshot'}
             </button>
           </>
         )}
@@ -110,7 +110,7 @@ export default function SlideContainer({ slide }: SlideContainerProps) {
           </span>
           <span className="flex items-center gap-1">
             <kbd className="px-1.5 py-0.5 bg-white border border-gray-300 rounded font-mono">V</kbd>
-            <span>web/screenshot</span>
+            <span>text/screenshot</span>
           </span>
         </span>
       </div>

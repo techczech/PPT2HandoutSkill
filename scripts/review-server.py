@@ -622,6 +622,9 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             <button onclick="analyzeSelected()" id="analyzeBtn" disabled>
                 Analyze Selected
             </button>
+            <button onclick="cancelAnalysis()" id="cancelBtn" style="display:none;background:#c00;color:#fff;">
+                Cancel
+            </button>
             <button onclick="approveAll()" class="success" id="approveAllBtn" disabled>
                 Approve All
             </button>
@@ -1110,16 +1113,34 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
             renderImages();
         }
 
+        let analyzeAbort = null;
+
+        function cancelAnalysis() {
+            if (analyzeAbort) {
+                analyzeAbort.abort();
+                analyzeAbort = null;
+            }
+        }
+
         async function analyzeSelected() {
             const toAnalyze = images.filter(i => i.selected && i.status === 'pending');
             if (toAnalyze.length === 0) return;
 
+            analyzeAbort = new AbortController();
+            const signal = analyzeAbort.signal;
+
             const btn = document.getElementById('analyzeBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
             btn.disabled = true;
             btn.innerHTML = '<span class="loading"></span>Analyzing...';
+            cancelBtn.style.display = '';
 
+            let completed = 0;
             for (const img of toAnalyze) {
+                if (signal.aborted) break;
+
                 img.status = 'analyzing';
+                btn.innerHTML = `<span class="loading"></span>Analyzing ${completed + 1}/${toAnalyze.length}...`;
                 renderImages();
 
                 try {
@@ -1130,7 +1151,8 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                             image_id: img.id,
                             backend: selectedBackend,
                             model: selectedModel
-                        })
+                        }),
+                        signal
                     });
                     const result = await res.json();
                     if (result.error) {
@@ -1140,8 +1162,13 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                         img.result = result;
                         img.status = 'analyzed';
                         img.selected = false;
+                        completed++;
                     }
                 } catch (e) {
+                    if (signal.aborted) {
+                        img.status = 'pending';
+                        break;
+                    }
                     showToast(`Failed to analyze ${img.src}`, true);
                     img.status = 'pending';
                 }
@@ -1149,11 +1176,21 @@ HTML_TEMPLATE = '''<!DOCTYPE html>
                 renderImages();
             }
 
+            // Reset any images still marked 'analyzing' back to pending
+            images.filter(i => i.status === 'analyzing').forEach(i => i.status = 'pending');
+
+            analyzeAbort = null;
+            cancelBtn.style.display = 'none';
             btn.innerHTML = 'Analyze Selected';
             updateButtons();
             updateCategorySummary();
-            showToast(`Analyzed ${toAnalyze.length} images`);
-            switchTab('analyzed');
+            renderImages();
+            if (signal.aborted) {
+                showToast(`Cancelled — ${completed} of ${toAnalyze.length} analyzed`);
+            } else {
+                showToast(`Analyzed ${completed} images`);
+            }
+            if (completed > 0) switchTab('analyzed');
         }
 
         function approveImage(id) {

@@ -40,6 +40,15 @@ export default function SiteHeader({ onOpenSearch, onOpenHelp }: SiteHeaderProps
           >
             <u>S</u>lides
           </Link>
+          {lectureNotes.length > 0 && (
+            <Link
+              to="/lecture-notes"
+              className={isActive('/lecture-notes') ? 'active' : ''}
+              title="Lecture Notes (n)"
+            >
+              <u>N</u>otes
+            </Link>
+          )}
           <Link
             to="/resources"
             className={isActive('/resources') ? 'active' : ''}
@@ -61,16 +70,6 @@ export default function SiteHeader({ onOpenSearch, onOpenHelp }: SiteHeaderProps
           >
             <u>A</u>bout
           </Link>
-          {lectureNotes.length > 0 && (
-            <Link
-              to="/lecture-notes"
-              className={isActive('/lecture-notes') ? 'active' : ''}
-              title="Lecture Notes (n)"
-            >
-              <u>N</u>otes
-            </Link>
-          )}
-
           {/* Divider */}
           <div
             className="w-px h-5 mx-2"

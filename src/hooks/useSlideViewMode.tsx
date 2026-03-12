@@ -14,7 +14,7 @@ const SlideViewModeContext = createContext<SlideViewModeContextType | null>(null
 
 export function SlideViewModeProvider({ children }: { children: ReactNode }) {
   const [mainView, setMainView] = useState<MainView>('content');
-  const [displayMode, setDisplayMode] = useState<DisplayMode>('rendered');
+  const [displayMode, setDisplayMode] = useState<DisplayMode>('screenshot');
 
   const toggleDisplayMode = () => {
     setDisplayMode(prev => prev === 'rendered' ? 'screenshot' : 'rendered');
