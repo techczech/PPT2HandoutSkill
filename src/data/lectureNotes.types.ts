@@ -3,5 +3,3 @@ export interface LectureSection {
   slideRange: string;
   narrative: string;
 }
-
-export const lectureNotes: LectureSection[] = [];

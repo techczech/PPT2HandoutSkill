@@ -2,11 +2,7 @@
 // Fill in details relevant to your presentation
 // Optional fields can be left empty ("") or arrays empty ([])
 
-interface FeaturedLink {
-  name: string;
-  url: string;
-  description?: string;
-}
+import type { FeaturedLink } from './sessionInfo.types';
 
 export const sessionInfo = {
   // Main presentation title

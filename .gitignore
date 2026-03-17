@@ -1,12 +1,19 @@
 # Source materials (user-specific PowerPoint content)
 sourcematerials/
 
-# Generated assets (presentation-specific, created by processMedia.js)
+# Generated assets (presentation-specific, created by processMedia.js and init-data.js)
 # These are generated from sourcematerials/ during build — never commit them
 public/assets/images/slides/
 public/assets/images/icons/
 public/assets/screenshots/
 public/assets/videos/
+
+# Presentation-specific data files (generated per-project by the skill workflow)
+# Empty templates are in *.template files; init-data.js copies them on first build
+src/data/presentation.json
+src/data/entities.json
+src/data/sessionInfo.ts
+src/data/lectureNotes.ts
 
 # Dependencies
 node_modules/
