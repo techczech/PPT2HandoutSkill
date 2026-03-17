@@ -67,6 +67,25 @@ python scripts/extract-pptx.py <input.pptx> sourcematerials/
 
 **Limitations to mention:** SmartArt exported as images, animations ignored, some formatting simplified.
 
+### Step 2b: Generate Slide Screenshots
+
+Always generate slide screenshots from the PPTX file. These provide a faithful visual representation of each slide and are essential for the screenshot/content toggle feature.
+
+**Requirements:** LibreOffice and poppler (pdftoppm). On macOS:
+```bash
+brew install --cask libreoffice  # if not installed
+brew install poppler              # if not installed
+```
+
+**Generate screenshots:**
+```bash
+python scripts/generate-screenshots.py <input.pptx> sourcematerials
+```
+
+This creates `sourcematerials/screenshots/screenshot_1.png` through `screenshot_N.png`. The `processMedia.js` build step will copy these to `public/assets/screenshots/` automatically.
+
+**IMPORTANT:** Screenshots are generated per-presentation and must NOT be committed to the template repo. They are listed in `.gitignore` under `public/assets/screenshots/`. Each new presentation generates its own screenshots during this step.
+
 ### Step 3: Analyze Presentation Content
 
 Read `sourcematerials/presentation.json` and analyze the content. Extract:
@@ -366,7 +385,20 @@ Then proceed with Step 1.
 
 - Node.js 18+
 - Python 3.8+ with python-pptx (`pip install python-pptx`)
+- LibreOffice + poppler (for slide screenshot generation)
 - ffmpeg (optional, for video compression on Cloudflare)
+
+## Generated Assets (Not in Template)
+
+The template ships clean — all presentation-specific files are gitignored and generated per-project:
+
+- `sourcematerials/` — extracted PPTX content (JSON + media)
+- `public/assets/images/slides/` — slide images (copied by processMedia.js)
+- `public/assets/images/icons/` — SmartArt icons (copied by processMedia.js)
+- `public/assets/screenshots/` — slide screenshots (from generate-screenshots.py)
+- `public/assets/videos/` — presentation videos (copied by processMedia.js)
+
+**Never commit these to the template repo.** Each presentation generates its own assets during the workflow.
 
 ## References
 

@@ -1,6 +1,13 @@
 # Source materials (user-specific PowerPoint content)
 sourcematerials/
 
+# Generated assets (presentation-specific, created by processMedia.js)
+# These are generated from sourcematerials/ during build — never commit them
+public/assets/images/slides/
+public/assets/images/icons/
+public/assets/screenshots/
+public/assets/videos/
+
 # Dependencies
 node_modules/
 
