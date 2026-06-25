@@ -700,8 +700,12 @@ def extract_emf_embedded_image(emf_data: bytes):
 def extract_image(shape, media_dir, slide_num, shape_idx, slide_title=None):
     """Extract image from shape and save to media directory."""
     try:
-        if hasattr(shape, 'image') and hasattr(shape.image, 'blob'):
+        try:
             image = shape.image
+        except (AttributeError, ValueError):
+            image = None
+
+        if image is not None and hasattr(image, 'blob'):
             ext = image.ext
             blob = image.blob
             content_type = getattr(image, 'content_type', '')
@@ -786,8 +790,12 @@ def extract_layout_background(slide_layout, media_dir, slide_num):
         largest = None
         largest_size = 0
         for shape in slide_layout.shapes:
-            if hasattr(shape, 'image') and hasattr(shape.image, 'blob'):
-                blob_size = len(shape.image.blob)
+            try:
+                image = shape.image
+            except (AttributeError, ValueError):
+                image = None
+            if image is not None and hasattr(image, 'blob'):
+                blob_size = len(image.blob)
                 # Pick the largest image (background), skip small logos
                 if blob_size > largest_size:
                     largest_size = blob_size
@@ -954,7 +962,11 @@ def process_slide(slide, slide_num, media_dir):
             # Non-title placeholders (body, media, subtitle, etc.) fall through to content extraction
 
         # Images - use hasattr check to catch placeholder images (type 14) too
-        if hasattr(shape, 'image') and hasattr(shape.image, 'blob'):
+        try:
+            image = shape.image
+        except (AttributeError, ValueError):
+            image = None
+        if image is not None and hasattr(image, 'blob'):
             img_content = extract_image(shape, media_dir, slide_num, idx, title)
             if img_content:
                 content.append(img_content)
